@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SmartTrip Globe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
+  canvas { display: block; }
+  #tooltip {
+    position: absolute; display: none; background: rgba(10,10,30,0.92);
+    border: 1px solid rgba(255,255,255,0.25); border-radius: 10px;
+    padding: 8px 14px; color: #fff; font-family: sans-serif; font-size: 13px;
+    pointer-events: none; z-index: 100; backdrop-filter: blur(8px);
+    transform: translate(-50%, -120%);
+  }
+  #tooltip .city { font-weight: 700; font-size: 14px; }
+  #tooltip .country { opacity: 0.65; font-size: 11px; margin-top: 1px; }
+  #tooltip .weather { color: #fdba74; font-size: 11px; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div id="tooltip"><div class="city"></div><div class="country"></div><div class="weather"></div></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ── Destinations ──────────────────────────────────────────────────────────────
+const DESTINATIONS = [
+  { city:'Paris',lat:48.856,lon:2.352,code:'CDG',country:'France' },
+  { city:'London',lat:51.507,lon:-0.128,code:'LHR',country:'Royaume-Uni' },
+  { city:'Rome',lat:41.903,lon:12.496,code:'FCO',country:'Italie' },
+  { city:'Madrid',lat:40.417,lon:-3.704,code:'MAD',country:'Espagne' },
+  { city:'Berlin',lat:52.520,lon:13.405,code:'TXL',country:'Allemagne' },
+  { city:'Amsterdam',lat:52.368,lon:4.904,code:'AMS',country:'Pays-Bas' },
+  { city:'Athens',lat:37.984,lon:23.728,code:'ATH',country:'Grèce' },
+  { city:'Lisbon',lat:38.722,lon:-9.139,code:'LIS',country:'Portugal' },
+  { city:'Vienna',lat:48.208,lon:16.374,code:'VIE',country:'Autriche' },
+  { city:'Prague',lat:50.075,lon:14.438,code:'PRG',country:'Rép. Tchèque' },
+  { city:'Budapest',lat:47.498,lon:19.040,code:'BUD',country:'Hongrie' },
+  { city:'Stockholm',lat:59.329,lon:18.069,code:'ARN',country:'Suède' },
+  { city:'Copenhagen',lat:55.676,lon:12.568,code:'CPH',country:'Danemark' },
+  { city:'Oslo',lat:59.914,lon:10.752,code:'OSL',country:'Norvège' },
+  { city:'Dublin',lat:53.350,lon:-6.260,code:'DUB',country:'Irlande' },
+  { city:'Istanbul',lat:41.008,lon:28.978,code:'IST',country:'Turquie' },
+  { city:'Barcelona',lat:41.387,lon:2.169,code:'BCN',country:'Espagne' },
+  { city:'New York',lat:40.713,lon:-74.006,code:'JFK',country:'États-Unis' },
+  { city:'Los Angeles',lat:34.052,lon:-118.244,code:'LAX',country:'États-Unis' },
+  { city:'Miami',lat:25.762,lon:-80.192,code:'MIA',country:'États-Unis' },
+  { city:'San Francisco',lat:37.775,lon:-122.419,code:'SFO',country:'États-Unis' },
+  { city:'Chicago',lat:41.878,lon:-87.630,code:'ORD',country:'États-Unis' },
+  { city:'Las Vegas',lat:36.170,lon:-115.140,code:'LAS',country:'États-Unis' },
+  { city:'Toronto',lat:43.653,lon:-79.383,code:'YYZ',country:'Canada' },
+  { city:'Montreal',lat:45.502,lon:-73.567,code:'YUL',country:'Canada' },
+  { city:'Vancouver',lat:49.283,lon:-123.121,code:'YVR',country:'Canada' },
+  { city:'Cancun',lat:21.162,lon:-86.852,code:'CUN',country:'Mexique' },
+  { city:'Rio de Janeiro',lat:-22.907,lon:-43.173,code:'GIG',country:'Brésil' },
+  { city:'São Paulo',lat:-23.551,lon:-46.633,code:'GRU',country:'Brésil' },
+  { city:'Buenos Aires',lat:-34.604,lon:-58.382,code:'EZE',country:'Argentine' },
+  { city:'Tokyo',lat:35.676,lon:139.650,code:'HND',country:'Japon' },
+  { city:'Osaka',lat:34.694,lon:135.502,code:'KIX',country:'Japon' },
+  { city:'Seoul',lat:37.567,lon:126.978,code:'ICN',country:'Corée du Sud' },
+  { city:'Beijing',lat:39.904,lon:116.407,code:'PEK',country:'Chine' },
+  { city:'Shanghai',lat:31.230,lon:121.474,code:'PVG',country:'Chine' },
+  { city:'Hong Kong',lat:22.319,lon:114.169,code:'HKG',country:'Chine' },
+  { city:'Bangkok',lat:13.756,lon:100.502,code:'BKK',country:'Thaïlande' },
+  { city:'Singapore',lat:1.352,lon:103.820,code:'SIN',country:'Singapour' },
+  { city:'Bali',lat:-8.409,lon:115.190,code:'DPS',country:'Indonésie' },
+  { city:'Kuala Lumpur',lat:3.139,lon:101.687,code:'KUL',country:'Malaisie' },
+  { city:'Dubai',lat:25.205,lon:55.270,code:'DXB',country:'Émirats Arabes' },
+  { city:'Doha',lat:25.286,lon:51.530,code:'DOH',country:'Qatar' },
+  { city:'Mumbai',lat:19.082,lon:72.877,code:'BOM',country:'Inde' },
+  { city:'Delhi',lat:28.614,lon:77.209,code:'DEL',country:'Inde' },
+  { city:'Cairo',lat:30.065,lon:31.250,code:'CAI',country:'Égypte' },
+  { city:'Casablanca',lat:33.573,lon:-7.589,code:'CMN',country:'Maroc' },
+  { city:'Cape Town',lat:-33.925,lon:18.424,code:'CPT',country:'Afrique du Sud' },
+  { city:'Nairobi',lat:-1.286,lon:36.818,code:'NBO',country:'Kenya' },
+  { city:'Sydney',lat:-33.869,lon:151.209,code:'SYD',country:'Australie' },
+  { city:'Melbourne',lat:-37.814,lon:144.963,code:'MEL',country:'Australie' },
+  { city:'Auckland',lat:-36.848,lon:174.763,code:'AKL',country:'Nouvelle-Zélande' },
+];
+
+// ── Scene setup ───────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+const W = window.innerWidth, H = window.innerHeight;
+const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 1000);
+camera.position.set(0, 0, 8);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(W, H);
+renderer.setClearColor(0x000000, 1);
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 4;
+controls.maxDistance = 18;
+controls.rotateSpeed = 0.7;
+controls.zoomSpeed = 0.7;
+controls.enablePan = false;
+
+// ── Lighting ──────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+sun.position.set(5, 3, 5);
+scene.add(sun);
+const fill = new THREE.PointLight(0x4488ff, 1.2, 100);
+fill.position.set(-10, 0, -10);
+scene.add(fill);
+
+// ── Stars ─────────────────────────────────────────────────────────────────────
+{
+  const geo = new THREE.BufferGeometry();
+  const positions = [];
+  for (let i = 0; i < 8000; i++) {
+    const theta = Math.random() * 2 * Math.PI;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 200 + Math.random() * 100;
+    positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, sizeAttenuation: true })));
+}
+
+// ── Globe group ───────────────────────────────────────────────────────────────
+const globeGroup = new THREE.Group();
+scene.add(globeGroup);
+
+// Earth textures
+const loader = new THREE.TextureLoader();
+let earthReady = false;
+let globe; // mesh
+
+const earthTex = loader.load(
+  'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+  () => { earthReady = true; }
+);
+const bumpTex = loader.load('https://unpkg.com/three-globe/example/img/earth-topology.png');
+
+globe = new THREE.Mesh(
+  new THREE.SphereGeometry(2.5, 64, 64),
+  new THREE.MeshStandardMaterial({ map: earthTex, bumpMap: bumpTex, bumpScale: 0.05 })
+);
+globeGroup.add(globe);
+
+// Cloud layer
+const cloudMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(2.502, 48, 48),
+  new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 1 })
+);
+globeGroup.add(cloudMesh);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const RADIUS = 2.5;
+function latLonToVec3(lat, lon, r = RADIUS + 0.055) {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lon + 180) * (Math.PI / 180);
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+    r * Math.cos(phi),
+    r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+// ── Marker management ─────────────────────────────────────────────────────────
+const markerMeshes = [];   // invisible hit-test spheres
+const ringMeshes   = [];   // glowing ring for each dest
+const dotMeshes    = [];   // centre dot
+
+const NORMAL_COLOR   = new THREE.Color(0x6366f1);   // indigo – tous les marqueurs
+const HIGHLIGHT_TOP  = new THREE.Color(0xf59e0b);   // ambre – top résultat
+const HIGHLIGHT_SEC  = new THREE.Color(0x22d3ee);   // cyan – suggestions
+const SELECT_COLOR   = new THREE.Color(0xec4899);   // rose – sélectionné
+const FAVORITE_COLOR = new THREE.Color(0xfbbf24);   // or – favoris
+const RECENT_COLOR   = new THREE.Color(0x34d399);   // émeraude – historique
+
+let highlightedMap = {};   // city → 'top' | 'secondary'
+let selectedCity   = null;
+const favoriteCodes = new Set();
+const recentCodes   = new Set();
+
+DESTINATIONS.forEach((dest, i) => {
+  const pos = latLonToVec3(dest.lat, dest.lon);
+  const normal = pos.clone().normalize();
+  const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+
+  // Invisible hit sphere
+  const hitSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.07, 8, 8),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
+  );
+  hitSphere.position.copy(pos);
+  hitSphere.userData = { city: dest.city, country: dest.country, index: i };
+  globeGroup.add(hitSphere);
+  markerMeshes.push(hitSphere);
+
+  // Ring (torus – looks 3D and stays visible from all angles)
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.065, 0.013, 4, 20),
+    new THREE.MeshBasicMaterial({ color: NORMAL_COLOR, transparent: true, opacity: 0.0 })
+  );
+  ring.position.copy(pos).addScaledVector(normal, 0.035);
+  ring.quaternion.copy(quat);
+  globeGroup.add(ring);
+  ringMeshes.push(ring);
+
+  // Dot (sphere – no z-fighting, visible from all angles)
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.028, 8, 8),
+    new THREE.MeshBasicMaterial({ color: NORMAL_COLOR, transparent: true, opacity: 0.45 })
+  );
+  dot.position.copy(pos).addScaledVector(normal, 0.035);
+  globeGroup.add(dot);
+  dotMeshes.push(dot);
+});
+
+function refreshMarkers() {
+  DESTINATIONS.forEach((dest, i) => {
+    const isSelected = dest.city === selectedCity;
+    const hlType = highlightedMap[dest.city];
+    const isFav  = favoriteCodes.has(dest.code);
+    const isRecent = recentCodes.has(dest.code);
+    const show   = isSelected || !!hlType;
+    const special = isFav || isRecent;
+
+    const color = isSelected    ? SELECT_COLOR   :
+                  isFav         ? FAVORITE_COLOR  :
+                  isRecent      ? RECENT_COLOR    :
+                  hlType === 'top'       ? HIGHLIGHT_TOP  :
+                  hlType === 'secondary' ? HIGHLIGHT_SEC  : NORMAL_COLOR;
+
+    ringMeshes[i].material.color.copy(color);
+    ringMeshes[i].material.opacity = show ? 1.0 : 0.0;
+    dotMeshes[i].material.color.copy(color);
+    dotMeshes[i].material.opacity = isSelected ? 1.0 : (show || special) ? 0.85 : 0.45;
+  });
+}
+
+// ── Zoom animation ────────────────────────────────────────────────────────────
+let zoomAnim = null;
+let clickGlowAnim = null;
+function startZoom(lat, lon) {
+  const startPos = camera.position.clone();
+
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lon + 180) * (Math.PI / 180);
+  const norm = new THREE.Vector3(
+    -Math.sin(phi) * Math.cos(theta),
+    Math.cos(phi),
+    Math.sin(phi) * Math.sin(theta)
+  );
+  const targetPos = norm.clone().multiplyScalar(5.5);
+
+  zoomAnim = {
+    startTime: performance.now(),
+    duration: 2200,
+    from: startPos,
+    to: targetPos
+  };
+  controls.enabled = false;
+}
+
+// ── Public JS API (called from Android) ──────────────────────────────────────
+window.zoomToCity = function(city) {
+  const dest = DESTINATIONS.find(d => d.city.toLowerCase() === city.toLowerCase());
+  if (!dest) return;
+  selectedCity = dest.city;
+  refreshMarkers();
+  startZoom(dest.lat, dest.lon);
+};
+
+window.highlightDestinations = function(destinations) {
+  // destinations: [{city, isTop}]
+  highlightedMap = {};
+  (destinations || []).forEach(d => {
+    highlightedMap[d.city] = d.isTop ? 'top' : 'secondary';
+  });
+  refreshMarkers();
+  if (destinations && destinations.length > 0) {
+    // soft spin
+    autoRotateSpeed = 0.5;
+  }
+};
+
+window.clearHighlights = function() {
+  highlightedMap = {};
+  selectedCity = null;
+  refreshMarkers();
+  autoRotateSpeed = 0.18;
+  controls.enabled = true;
+};
+
+window.resetView = function() {
+  window.clearHighlights();
+  zoomAnim = {
+    startTime: performance.now(),
+    duration: 1800,
+    from: camera.position.clone(),
+    to: new THREE.Vector3(0, 0, 8)
+  };
+};
+
+window.setFavoriteCodes = function(codes) {
+  favoriteCodes.clear();
+  (codes || []).forEach(c => favoriteCodes.add(c));
+  refreshMarkers();
+};
+
+window.setRecentCodes = function(codes) {
+  recentCodes.clear();
+  (codes || []).forEach(c => recentCodes.add(c));
+  refreshMarkers();
+};
+
+let surpriseSpinTimer = null;
+window.startSurpriseSpin = function() {
+  autoRotateSpeed = 4.5;
+  if (surpriseSpinTimer) clearTimeout(surpriseSpinTimer);
+  surpriseSpinTimer = setTimeout(() => { autoRotateSpeed = 0.18; }, 2800);
+};
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let hoveredIndex = -1;
+
+function updatePointer(clientX, clientY) {
+  pointer.x = (clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+}
+
+function doRaycast(event) {
+  const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+  const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+  updatePointer(clientX, clientY);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(markerMeshes);
+  if (hits.length > 0) {
+    const idx = hits[0].object.userData.index;
+    hoveredIndex = idx;
+    const dest = DESTINATIONS[idx];
+    tooltip.style.display = 'block';
+    tooltip.style.left = clientX + 'px';
+    tooltip.style.top = (clientY - 8) + 'px';
+    tooltip.querySelector('.city').textContent = dest.city;
+    tooltip.querySelector('.country').textContent = dest.country + ' · ' + dest.code;
+    // Weather data if available
+    const wd = weatherData[dest.city];
+    const wDiv = tooltip.querySelector('.weather');
+    wDiv.textContent = wd ? `${Math.round(wd.temperature)}°C · ${wd.description}` : '';
+    document.body.style.cursor = 'pointer';
+  } else {
+    hoveredIndex = -1;
+    tooltip.style.display = 'none';
+    document.body.style.cursor = 'auto';
+  }
+}
+
+function doClick(event) {
+  const clientX = event.touches ? event.changedTouches[0].clientX : event.clientX;
+  const clientY = event.touches ? event.changedTouches[0].clientY : event.clientY;
+  updatePointer(clientX, clientY);
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(markerMeshes);
+  if (hits.length > 0) {
+    const city = hits[0].object.userData.city;
+    selectedCity = city;
+    const dest = DESTINATIONS.find(d => d.city === city);
+    if (dest) startZoom(dest.lat, dest.lon);
+    refreshMarkers();
+    // Click glow animation
+    const glowNormal = hits[0].object.position.clone().normalize();
+    const glowQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1), glowNormal);
+    if (clickGlowAnim) globeGroup.remove(clickGlowAnim.mesh);
+    const glowMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(0.065, 0.008, 4, 20),
+      new THREE.MeshBasicMaterial({ color: SELECT_COLOR, transparent: true, opacity: 0.95 })
+    );
+    glowMesh.position.copy(hits[0].object.position).addScaledVector(glowNormal, 0.035);
+    glowMesh.quaternion.copy(glowQuat);
+    globeGroup.add(glowMesh);
+    clickGlowAnim = { mesh: glowMesh, startTime: performance.now() };
+    // Notify Android
+    if (window.SmartTripBridge) {
+      window.SmartTripBridge.onMarkerClick(city);
+    }
+  }
+}
+
+renderer.domElement.addEventListener('mousemove', doRaycast);
+renderer.domElement.addEventListener('touchmove', (e) => { e.preventDefault(); doRaycast(e); }, { passive: false });
+renderer.domElement.addEventListener('click', doClick);
+renderer.domElement.addEventListener('touchend', (e) => { e.preventDefault(); doClick(e); }, { passive: false });
+
+// ── Weather data store (populated by Android) ─────────────────────────────────
+const weatherData = {};
+window.setWeatherData = function(city, data) {
+  weatherData[city] = data;
+};
+
+// ── Auto-rotate speed ─────────────────────────────────────────────────────────
+let autoRotateSpeed = 0.18;
+
+// ── Easing ────────────────────────────────────────────────────────────────────
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+// ── Render loop ───────────────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  // Auto-rotation (only when not zooming)
+  if (!zoomAnim) {
+    globeGroup.rotation.y += autoRotateSpeed * delta;
+  }
+
+  // Cloud drift
+  cloudMesh.rotation.y += 0.05 * delta;
+
+  // Click glow animation (expand + fade)
+  if (clickGlowAnim) {
+    const elapsed = (performance.now() - clickGlowAnim.startTime) / 1400;
+    if (elapsed >= 1) {
+      globeGroup.remove(clickGlowAnim.mesh);
+      clickGlowAnim = null;
+    } else {
+      clickGlowAnim.mesh.scale.setScalar(1 + elapsed * 3.2);
+      clickGlowAnim.mesh.material.opacity = 0.9 * (1 - elapsed);
+    }
+  }
+
+  // Pulse rings (selected + highlighted) + scale-pulse ALL dots
+  DESTINATIONS.forEach((dest, i) => {
+    const isSelected = dest.city === selectedCity;
+    const hlType = highlightedMap[dest.city];
+    const isFav  = favoriteCodes.has(dest.code);
+    const isRecent = recentCodes.has(dest.code);
+    const special = isSelected || !!hlType || isFav || isRecent;
+
+    // Ring opacity pulse (only for active markers)
+    if (isSelected || !!hlType) {
+      const pulse = isSelected
+        ? 0.75 + Math.sin(t * 4) * 0.2
+        : (hlType === 'top' ? 0.65 + Math.sin(t * 3 + 0.5) * 0.25 : 0.5 + Math.sin(t * 2 + 1) * 0.2);
+      ringMeshes[i].material.opacity = pulse;
+    }
+
+    // Scale pulse: strong for special, subtle for all others
+    if (special) {
+      const freq = isSelected ? 3.5 : (hlType === 'top' ? 2.8 : 2.2);
+      const amp  = isSelected ? 0.32 : (isFav ? 0.2 : 0.15);
+      dotMeshes[i].scale.setScalar(1 + Math.sin(t * freq + i * 0.4) * amp);
+    } else {
+      dotMeshes[i].scale.setScalar(1 + Math.sin(t * 0.7 + i * 0.6) * 0.07);
+    }
+  });
+
+  // Zoom animation
+  if (zoomAnim) {
+    const elapsed = (performance.now() - zoomAnim.startTime) / zoomAnim.duration;
+    const progress = Math.min(elapsed, 1);
+    const eased = easeInOut(progress);
+    camera.position.lerpVectors(zoomAnim.from, zoomAnim.to, eased);
+    camera.lookAt(0, 0, 0);
+    if (progress >= 1) {
+      zoomAnim = null;
+      controls.enabled = true;
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── Resize ────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── Ready signal ──────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if (window.SmartTripBridge) {
+    window.SmartTripBridge.onGlobeReady();
+  }
+});
+</script>
+</body>
+</html>

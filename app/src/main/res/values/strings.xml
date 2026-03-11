@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmartTrip</string>
+    <string name="login">Se connecter</string>
+    <string name="register">S\'inscrire</string>
+    <string name="logout">Déconnexion</string>
+    <string name="email">Email</string>
+    <string name="password">Mot de passe</string>
+    <string name="first_name">Prénom</string>
+    <string name="last_name">Nom</string>
+    <string name="search">Rechercher</string>
+    <string name="origin">Départ</string>
+    <string name="destination">Destination</string>
+    <string name="departure_date">Date de départ</string>
+    <string name="return_date">Date de retour</string>
+    <string name="passengers">Passagers</string>
+    <string name="cabin_class">Classe</string>
+    <string name="roundtrip">Aller-retour</string>
+    <string name="oneway">Aller simple</string>
+    <string name="multicity">Multi-villes</string>
+    <string name="favorites">Favoris</string>
+    <string name="history">Historique</string>
+    <string name="profile">Profil</string>
+    <string name="home">Accueil</string>
+    <string name="loading">Chargement…</string>
+    <string name="error_no_connection">Impossible de se connecter au serveur</string>
+    <string name="ai_score">Score IA</string>
+    <string name="best_deal">Meilleur tarif</string>
+    <string name="book_now">Réserver</string>
+    <string name="add_favorite">Ajouter aux favoris</string>
+    <string name="remove_favorite">Retirer des favoris</string>
+    <string name="no_flights">Aucun vol trouvé</string>
+    <string name="no_favorites">Aucun favori</string>
+    <string name="no_history">Aucun historique</string>
+    <string name="inspiration_mode">Mode Inspiration</string>
+    <string name="trending_destinations">Destinations tendance</string>
+    <string name="forgot_password">Mot de passe oublié</string>
+    <string name="reset_password">Réinitialiser le mot de passe</string>
+    <string name="verify_email">Vérifier l\'email</string>
+    <string name="resend_code">Renvoyer le code</string>
+</resources>
