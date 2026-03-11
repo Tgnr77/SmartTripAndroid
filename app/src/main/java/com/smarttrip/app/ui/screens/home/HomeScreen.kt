@@ -101,10 +101,15 @@ fun HomeScreen(
     val departureDateMillis = departureDatePickerState.selectedDateMillis
     val returnMinMillis = if (departureDateMillis != null) departureDateMillis + 86_400_000L else todayUtcMillis + 86_400_000L
     val returnDatePickerState = rememberDatePickerState(
+        initialDisplayedMonthMillis = returnMinMillis,
         selectableDates = object : androidx.compose.material3.SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= returnMinMillis
         }
     )
+    // Navigue vers le bon mois quand la date de départ change
+    LaunchedEffect(returnMinMillis) {
+        returnDatePickerState.displayedMonthMillis = returnMinMillis
+    }
 
     if (showDepartureDatePicker) {
         DatePickerDialog(
