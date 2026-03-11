@@ -22,6 +22,8 @@ import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 import com.smarttrip.app.ui.viewmodel.SearchHistoryViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +38,8 @@ fun SearchHistoryScreen(
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
     var showClearConfirm by remember { mutableStateOf(false) }
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(authState) {
         when (authState) {
@@ -47,11 +51,11 @@ fun SearchHistoryScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Historique", fontWeight = FontWeight.Bold) },
+            title = { Text(strings.historyTitle, fontWeight = FontWeight.Bold) },
             actions = {
                 if (history.isNotEmpty()) {
                     IconButton(onClick = { showClearConfirm = true }) {
-                        Icon(Icons.Default.DeleteSweep, contentDescription = "Tout effacer", tint = Rose500)
+                        Icon(Icons.Default.DeleteSweep, contentDescription = strings.btnClearAll, tint = Rose500)
                     }
                 }
             },
@@ -66,14 +70,14 @@ fun SearchHistoryScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("⚠️", fontSize = 40.sp)
                     Text(error!!, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { viewModel.loadHistory() }) { Text("Réessayer") }
+                    Button(onClick = { viewModel.loadHistory() }) { Text(strings.btnRetry) }
                 }
             }
             history.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("🔍", fontSize = 56.sp)
-                    Text("Aucune recherche", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Vos recherches apparaîtront ici", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(strings.noHistory, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(strings.noHistorySubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -101,15 +105,15 @@ fun SearchHistoryScreen(
     if (showClearConfirm) {
         AlertDialog(
             onDismissRequest = { showClearConfirm = false },
-            title = { Text("Effacer tout l'historique ?") },
-            text = { Text("Toutes vos recherches seront supprimées.") },
+            title = { Text(strings.clearHistoryTitle) },
+            text = { Text(strings.clearHistoryText) },
             confirmButton = {
                 TextButton(onClick = { showClearConfirm = false; viewModel.clearAll() }) {
-                    Text("Effacer", color = MaterialTheme.colorScheme.error)
+                    Text(strings.btnClearAll, color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showClearConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showClearConfirm = false }) { Text(strings.cancel) }
             }
         )
     }
@@ -121,6 +125,8 @@ fun HistoryCard(
     onDelete: () -> Unit,
     onSearchAgain: () -> Unit
 ) {
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -139,7 +145,7 @@ fun HistoryCard(
                     Text(entry.destinationCode, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Slate900)
                 }
                 IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Supprimer", tint = Slate500, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Close, contentDescription = strings.btnDelete, tint = Slate500, modifier = Modifier.size(16.dp))
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -172,7 +178,7 @@ fun HistoryCard(
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Relancer la recherche", fontWeight = FontWeight.SemiBold)
+                Text(strings.btnRelaunch, fontWeight = FontWeight.SemiBold)
             }
         }
     }

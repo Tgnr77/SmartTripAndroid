@@ -30,6 +30,8 @@ import com.smarttrip.app.ui.theme.Blue600
 import com.smarttrip.app.ui.theme.Blue700
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +48,8 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsState()
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
@@ -86,12 +90,12 @@ fun LoginScreen(
             Spacer(Modifier.height(24.dp))
 
             Text(
-                "Connexion",
+                strings.loginTitle,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "Bienvenue sur SmartTrip",
+                strings.loginSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -117,7 +121,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(strings.fieldEmail) },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
@@ -130,7 +134,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Mot de passe") },
+                label = { Text(strings.fieldPassword) },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -151,7 +155,7 @@ fun LoginScreen(
                 onClick = onNavigateToForgotPassword,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Mot de passe oublié ?", style = MaterialTheme.typography.bodySmall)
+                Text(strings.forgotPassword, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(Modifier.height(8.dp))
@@ -169,7 +173,7 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Se connecter", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(strings.btnLogin, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
 
@@ -178,7 +182,7 @@ fun LoginScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HorizontalDivider(modifier = Modifier.weight(1f))
                 Text(
-                    "  ou  ",
+                    strings.orSeparator,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -188,9 +192,9 @@ fun LoginScreen(
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Pas encore de compte ?", style = MaterialTheme.typography.bodyMedium)
+                Text(strings.noAccount, style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = onNavigateToRegister) {
-                    Text("S'inscrire", fontWeight = FontWeight.SemiBold)
+                    Text(strings.btnRegister, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -201,7 +205,7 @@ fun LoginScreen(
                 onClick = onBack,
                 modifier = Modifier.align(Alignment.TopStart).padding(top = 12.dp, start = 4.dp)
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
             }
         }
     }

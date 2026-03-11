@@ -22,6 +22,8 @@ import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 import com.smarttrip.app.ui.viewmodel.FavoritesViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +36,8 @@ fun FavoritesScreen(
     val favorites by viewModel.favorites.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(authState) {
         when (authState) {
@@ -45,7 +49,7 @@ fun FavoritesScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Mes favoris", fontWeight = FontWeight.Bold) },
+            title = { Text(strings.favoritesTitle, fontWeight = FontWeight.Bold) },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
         )
 
@@ -57,14 +61,14 @@ fun FavoritesScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("⚠️", fontSize = 40.sp)
                     Text(error!!, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { viewModel.loadFavorites() }) { Text("Réessayer") }
+                    Button(onClick = { viewModel.loadFavorites() }) { Text(strings.btnRetry) }
                 }
             }
             favorites.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("💙", fontSize = 56.sp)
-                    Text("Aucun favori", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Ajoutez des vols depuis les résultats", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(strings.noFavorites, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(strings.noFavoritesSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -80,6 +84,8 @@ fun FavoritesScreen(
 @Composable
 fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
     var showConfirm by remember { mutableStateOf(false) }
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -102,7 +108,7 @@ fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
                     Spacer(Modifier.height(4.dp))
                     Text(favorite.departureDate, style = MaterialTheme.typography.bodySmall, color = Slate500)
                     if (favorite.returnDate != null) {
-                        Text("Retour : ${favorite.returnDate}", style = MaterialTheme.typography.bodySmall, color = Slate500)
+                        Text("${strings.favoriteReturn}${favorite.returnDate}", style = MaterialTheme.typography.bodySmall, color = Slate500)
                     }
                     if (favorite.airlineName != null) {
                         Spacer(Modifier.height(4.dp))
@@ -141,7 +147,7 @@ fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
                     val stops = favorite.stops
                     Surface(shape = RoundedCornerShape(6.dp), color = if (stops == 0) Blue50 else MaterialTheme.colorScheme.surfaceVariant) {
                         Text(
-                            if (stops == 0) "Direct" else "$stops escale${if (stops > 1) "s" else ""}",
+                            if (stops == 0) strings.labelDirect else "$stops ${if (stops > 1) strings.labelStops else strings.labelStop}",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (stops == 0) Blue600 else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -157,7 +163,7 @@ fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
                     }
                 }
                 IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Delete, contentDescription = "Supprimer", tint = Rose500, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Delete, contentDescription = strings.btnDelete, tint = Rose500, modifier = Modifier.size(18.dp))
                 }
             }
         }
@@ -166,15 +172,15 @@ fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            title = { Text("Supprimer ce favori ?") },
-            text = { Text("Cette action est irréversible.") },
+            title = { Text(strings.deleteFavoriteTitle) },
+            text = { Text(strings.deleteFavoriteText) },
             confirmButton = {
                 TextButton(onClick = { showConfirm = false; onDelete() }) {
-                    Text("Supprimer", color = MaterialTheme.colorScheme.error)
+                    Text(strings.btnDelete, color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showConfirm = false }) { Text(strings.cancel) }
             }
         )
     }

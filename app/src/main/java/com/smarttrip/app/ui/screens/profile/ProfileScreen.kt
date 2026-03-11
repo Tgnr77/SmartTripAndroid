@@ -24,6 +24,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +37,8 @@ fun ProfileScreen(
     val authState by viewModel.uiState.collectAsState()
     val user by viewModel.currentUser.collectAsState()
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(authState) {
         if (authState is AuthUiState.Unauthenticated) onLoginRequired()
@@ -90,7 +94,7 @@ fun ProfileScreen(
                             ) {
                                 Icon(Icons.Default.VerifiedUser, null, tint = Emerald500, modifier = Modifier.size(14.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Email vérifié", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                                Text(strings.profileEmailVerified, style = MaterialTheme.typography.labelSmall, color = Color.White)
                             }
                         }
                     }
@@ -101,7 +105,7 @@ fun ProfileScreen(
         // Info rows
         Column(modifier = Modifier.padding(24.dp)) {
             Text(
-                "INFORMATIONS DU COMPTE",
+                strings.profileSectionTitle,
                 style = MaterialTheme.typography.labelSmall,
                 color = Slate500,
                 fontWeight = FontWeight.SemiBold,
@@ -109,15 +113,15 @@ fun ProfileScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             if (user != null) {
-                ProfileRow(Icons.Default.Person, "Prénom", user!!.firstName)
+                ProfileRow(Icons.Default.Person, strings.fieldFirstName, user!!.firstName)
                 HorizontalDivider(color = Slate200)
-                ProfileRow(Icons.Default.Person, "Nom", user!!.lastName)
+                ProfileRow(Icons.Default.Person, strings.fieldLastName, user!!.lastName)
                 HorizontalDivider(color = Slate200)
-                ProfileRow(Icons.Default.Email, "Email", user!!.email)
+                ProfileRow(Icons.Default.Email, strings.fieldEmail, user!!.email)
                 if (user!!.createdAt != null) {
                     HorizontalDivider(color = Slate200)
                     val date = try { user!!.createdAt!!.take(10) } catch (e: Exception) { user!!.createdAt!! }
-                    ProfileRow(Icons.Default.CalendarToday, "Membre depuis", date)
+                    ProfileRow(Icons.Default.CalendarToday, strings.memberSince, date)
                 }
             } else {
                 Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
@@ -134,7 +138,7 @@ fun ProfileScreen(
             ) {
                 Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Se déconnecter", fontWeight = FontWeight.SemiBold)
+                Text(strings.btnLogout, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -142,19 +146,19 @@ fun ProfileScreen(
     if (showLogoutConfirm) {
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
-            title = { Text("Se déconnecter ?") },
-            text = { Text("Vous devrez vous reconnecter pour accéder à vos favoris et à votre historique.") },
+            title = { Text(strings.logoutTitle) },
+            text = { Text(strings.logoutText) },
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutConfirm = false
                     viewModel.logout()
                     onLogout()
                 }) {
-                    Text("Déconnexion", color = MaterialTheme.colorScheme.error)
+                    Text(strings.confirmLogout, color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = false }) { Text("Annuler") }
+                TextButton(onClick = { showLogoutConfirm = false }) { Text(strings.cancel) }
             }
         )
     }

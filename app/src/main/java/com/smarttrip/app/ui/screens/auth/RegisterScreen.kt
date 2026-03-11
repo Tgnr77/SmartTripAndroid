@@ -26,6 +26,8 @@ import com.smarttrip.app.ui.theme.Blue600
 import com.smarttrip.app.ui.theme.Blue700
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +43,8 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsState()
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
@@ -70,7 +74,7 @@ fun RegisterScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateToLogin) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                 }
             }
 
@@ -87,12 +91,12 @@ fun RegisterScreen(
             Spacer(Modifier.height(20.dp))
 
             Text(
-                "Créer un compte",
+                strings.registerTitle,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "Rejoignez SmartTrip",
+                strings.registerSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -119,7 +123,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it },
-                    label = { Text("Prénom") },
+                    label = { Text(strings.fieldFirstName) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
@@ -127,7 +131,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
-                    label = { Text("Nom") },
+                    label = { Text(strings.fieldLastName) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
@@ -139,7 +143,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(strings.fieldEmail) },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
@@ -152,7 +156,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Mot de passe") },
+                label = { Text(strings.fieldPassword) },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -186,16 +190,16 @@ fun RegisterScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("S'inscrire", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(strings.btnRegister, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Déjà un compte ?", style = MaterialTheme.typography.bodyMedium)
+                Text(strings.alreadyHaveAccount, style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = onNavigateToLogin) {
-                    Text("Se connecter", fontWeight = FontWeight.SemiBold)
+                    Text(strings.btnLogin, fontWeight = FontWeight.SemiBold)
                 }
             }
 

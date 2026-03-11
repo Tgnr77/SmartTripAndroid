@@ -26,6 +26,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.smarttrip.app.data.remote.models.FlightDto
 import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.SearchViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +48,8 @@ fun SearchResultsScreen(
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
     val sortBy by viewModel.sortBy.collectAsState()
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(origin, destination, departureDate) {
         if (origin.isNotBlank() && destination.isNotBlank() && departureDate.isNotBlank()) {
@@ -78,7 +82,7 @@ fun SearchResultsScreen(
             },
             navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -89,7 +93,7 @@ fun SearchResultsScreen(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf("best" to "Meilleur", "price" to "Prix", "duration" to "Durée")
+            listOf("best" to strings.sortBest, "price" to strings.sortPrice, "duration" to strings.sortDuration)
                 .forEach { (key, label) ->
                     FilterChip(
                         selected = sortBy == key,
@@ -119,7 +123,7 @@ fun SearchResultsScreen(
                         Text(error!!, color = MaterialTheme.colorScheme.error)
                         Button(onClick = {
                             viewModel.searchFlights(origin, destination, departureDate, returnDate.ifBlank { null }, passengers, cabinClass, nonStop)
-                        }) { Text("Réessayer") }
+                        }) { Text(strings.btnRetry) }
                     }
                 }
             }
@@ -127,8 +131,8 @@ fun SearchResultsScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("✈", fontSize = 56.sp)
-                        Text("Aucun vol trouvé", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Essayez d'autres dates ou destinations", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.noFlightsFound, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(strings.noFlightsSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -139,7 +143,7 @@ fun SearchResultsScreen(
                 ) {
                     item {
                         Text(
-                            "${flights.size} vol${if (flights.size > 1) "s" else ""} trouvé${if (flights.size > 1) "s" else ""}",
+                            "${flights.size} ${if (flights.size > 1) strings.flightWordPlural else strings.flightWord} ${if (flights.size > 1) strings.foundWordPlural else strings.foundWord}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -185,6 +189,8 @@ fun FlightCard(
     flight: FlightDto,
     onToggleFavorite: () -> Unit
 ) {
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -237,7 +243,7 @@ fun FlightCard(
                         color = if (flight.outbound.stops == 0) Blue50 else MaterialTheme.colorScheme.errorContainer
                     ) {
                         Text(
-                            if (flight.outbound.stops == 0) "Direct" else "${flight.outbound.stops} escale${if (flight.outbound.stops > 1) "s" else ""}",
+                            if (flight.outbound.stops == 0) strings.labelDirect else "${flight.outbound.stops} ${if (flight.outbound.stops > 1) strings.labelStops else strings.labelStop}",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (flight.outbound.stops == 0) Blue600 else MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -278,7 +284,7 @@ fun FlightCard(
                         fontWeight = FontWeight.Bold,
                         color = Blue600
                     )
-                    Text("par personne", style = MaterialTheme.typography.labelSmall, color = Slate500)
+                    Text(strings.perPerson, style = MaterialTheme.typography.labelSmall, color = Slate500)
                 }
                 if (flight.bookingLink != null) {
                     val context = LocalContext.current
@@ -292,7 +298,7 @@ fun FlightCard(
                     ) {
                         Icon(Icons.Default.OpenInBrowser, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Réserver", fontWeight = FontWeight.SemiBold)
+                        Text(strings.btnBook, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

@@ -25,6 +25,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,8 @@ fun VerifyEmailScreen(
     var code by remember { mutableStateOf("") }
     var resendEnabled by remember { mutableStateOf(true) }
     val uiState by viewModel.uiState.collectAsState()
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.EmailVerified) onVerified()
@@ -54,7 +58,7 @@ fun VerifyEmailScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = Slate700)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back, tint = Slate700)
             }
         }
         Column(
@@ -70,10 +74,10 @@ fun VerifyEmailScreen(
                 Text("✉️", fontSize = 34.sp)
             }
             Spacer(Modifier.height(20.dp))
-            Text("Vérifiez votre email", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate900)
+            Text(strings.verifyEmailTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate900)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Un code à 6 chiffres a été envoyé à\n$email",
+                strings.verifyEmailSubtitle.format(email),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate500,
                 textAlign = TextAlign.Center
@@ -99,7 +103,7 @@ fun VerifyEmailScreen(
             OutlinedTextField(
                 value = code,
                 onValueChange = { if (it.length <= 6) code = it },
-                label = { Text("Code de vérification") },
+                label = { Text(strings.verifyCodeLabel) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -117,7 +121,7 @@ fun VerifyEmailScreen(
                 if (uiState is AuthUiState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                 } else {
-                    Text("Vérifier", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(strings.btnVerify, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -125,7 +129,7 @@ fun VerifyEmailScreen(
                 onClick = { viewModel.resendVerification(email); resendEnabled = false },
                 enabled = resendEnabled
             ) {
-                Text("Renvoyer le code", color = if (resendEnabled) Blue600 else Slate500)
+                Text(strings.btnResendCode, color = if (resendEnabled) Blue600 else Slate500)
             }
         }
     }
@@ -141,6 +145,8 @@ fun ForgotPasswordScreen(
     var sent by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Box(
@@ -154,7 +160,7 @@ fun ForgotPasswordScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = Slate700)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back, tint = Slate700)
             }
         }
         Column(
@@ -170,10 +176,10 @@ fun ForgotPasswordScreen(
                 Text("🔑", fontSize = 34.sp)
             }
             Spacer(Modifier.height(20.dp))
-            Text("Mot de passe oublié", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate900)
+            Text(strings.forgotPasswordTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate900)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Entrez votre email pour recevoir un lien de réinitialisation",
+                strings.forgotPasswordSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate500,
                 textAlign = TextAlign.Center
@@ -189,7 +195,7 @@ fun ForgotPasswordScreen(
                     Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("✅", fontSize = 18.sp)
                         Spacer(Modifier.width(8.dp))
-                        Text("Email envoyé ! Vérifiez votre boîte mail.", style = MaterialTheme.typography.bodySmall, color = Slate900)
+                        Text(strings.forgotPasswordSuccess, style = MaterialTheme.typography.bodySmall, color = Slate900)
                     }
                 }
             } else {
@@ -206,7 +212,7 @@ fun ForgotPasswordScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text(strings.fieldEmail) },
                     leadingIcon = { Icon(Icons.Default.Email, null, tint = Slate500) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
@@ -230,7 +236,7 @@ fun ForgotPasswordScreen(
                     if (loading) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                     } else {
-                        Text("Envoyer le lien", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(strings.btnSendLink, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
@@ -251,6 +257,8 @@ fun ResetPasswordScreen(
     var confirm by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Box(
@@ -264,7 +272,7 @@ fun ResetPasswordScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour", tint = Slate700)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back, tint = Slate700)
             }
         }
         Column(
@@ -280,10 +288,10 @@ fun ResetPasswordScreen(
                 Text("🔒", fontSize = 34.sp)
             }
             Spacer(Modifier.height(20.dp))
-            Text("Nouveau mot de passe", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate900)
+            Text(strings.resetPasswordTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Slate900)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Choisissez un mot de passe sécurisé",
+                strings.resetPasswordSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Slate500,
                 textAlign = TextAlign.Center
@@ -304,7 +312,7 @@ fun ResetPasswordScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Nouveau mot de passe") },
+                label = { Text(strings.fieldNewPassword) },
                 leadingIcon = { Icon(Icons.Default.Lock, null, tint = Slate500) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -315,7 +323,7 @@ fun ResetPasswordScreen(
             OutlinedTextField(
                 value = confirm,
                 onValueChange = { confirm = it },
-                label = { Text("Confirmer le mot de passe") },
+                label = { Text(strings.fieldConfirmPassword) },
                 leadingIcon = { Icon(Icons.Default.Lock, null, tint = Slate500) },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -326,7 +334,7 @@ fun ResetPasswordScreen(
             Button(
                 onClick = {
                     if (password != confirm) {
-                        errorMsg = "Les mots de passe ne correspondent pas"
+                        errorMsg = strings.passwordMismatch
                         return@Button
                     }
                     loading = true
@@ -343,7 +351,7 @@ fun ResetPasswordScreen(
                 if (loading) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                 } else {
-                    Text("Réinitialiser", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(strings.btnResetPassword, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }

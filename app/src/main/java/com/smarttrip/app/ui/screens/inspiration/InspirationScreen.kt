@@ -36,6 +36,8 @@ import com.smarttrip.app.ui.theme.Primary600
 import com.smarttrip.app.ui.theme.Primary900
 import com.smarttrip.app.ui.viewmodel.InspirationUiState
 import com.smarttrip.app.ui.viewmodel.InspirationViewModel
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 import java.util.Calendar
 
 // ─── Chip option data ─────────────────────────────────────────────────────────
@@ -125,6 +127,8 @@ fun InspirationScreen(
     val budget        by viewModel.budget.collectAsState()
     val favoriteCodes by viewModel.favoriteCodes.collectAsState()
     val recentCodes   by viewModel.recentCodes.collectAsState()
+    val language      by LanguageManager.language.collectAsState()
+    val strings       = AppStrings.forLanguage(language)
 
     var origin        by remember { mutableStateOf("") }
     var originCode    by remember { mutableStateOf("") }
@@ -217,6 +221,7 @@ fun InspirationScreen(
                 is InspirationUiState.Success -> ResultsPanel(
                     results = results,
                     selectedCity = selectedCity,
+                    strings = strings,
                     onSelectCity = { city ->
                         selectedCity = city
                         globeController.zoomToCity(city)
@@ -239,6 +244,7 @@ fun InspirationScreen(
                     originSuggestions = originSuggestions,
                     showOriginDropdown = showOriginDropdown,
                     uiState = uiState,
+                    strings = strings,
                     onWeatherChange = { viewModel.weather.value = it },
                     onTemperatureChange = { viewModel.temperature.value = it },
                     onHumidityChange = { viewModel.humidity.value = it },
@@ -284,6 +290,7 @@ fun InspirationScreen(
                 AirportPickerDialog(
                     city = city,
                     airports = airports,
+                    strings = strings,
                     onSelect = { option ->
                         onNavigateToHome(option.code, "$city (${option.code})")
                         airportPickerCity = null
@@ -325,7 +332,7 @@ fun InspirationScreen(
                     Text("✨", fontSize = 20.sp)
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "Mode Inspiration",
+                        strings.inspirationScreenTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -350,7 +357,7 @@ fun InspirationScreen(
                             Text("🎲", fontSize = 14.sp)
                             Spacer(Modifier.width(5.dp))
                             Text(
-                                "Surprise",
+                                strings.surpriseBtn,
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
@@ -385,14 +392,14 @@ fun InspirationScreen(
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "Analyse météo mondiale…",
+                        strings.loadingAnalysis,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleSmall
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Interrogation de +50 destinations",
+                        strings.loadingQuerying,
                         color = Color.White.copy(alpha = 0.5f),
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -411,12 +418,36 @@ private fun FiltersPanel(
     origin: String, originCode: String, departureDate: String,
     originSuggestions: List<Airport>, showOriginDropdown: Boolean,
     uiState: InspirationUiState,
+    strings: AppStrings,
     onWeatherChange: (String) -> Unit, onTemperatureChange: (String) -> Unit,
     onHumidityChange: (String) -> Unit, onWindChange: (String) -> Unit,
     onBudgetChange: (String) -> Unit,
     onOriginChange: (String) -> Unit, onAirportSelect: (Airport) -> Unit,
     onDatePick: () -> Unit, onSearch: () -> Unit
 ) {
+    val weatherOptions = listOf(
+        Option("", strings.optionAny), Option("sunny", strings.optionSunny),
+        Option("cloudy", strings.optionCloudy), Option("rainy", strings.optionRainy),
+        Option("snowy", strings.optionSnowy), Option("stormy", strings.optionStormy)
+    )
+    val tempOptions = listOf(
+        Option("", strings.optionAny), Option("tropical", strings.optionTropical),
+        Option("hot", strings.optionHot), Option("mild", strings.optionMild),
+        Option("cool", strings.optionCool), Option("cold", strings.optionCold)
+    )
+    val humidityOptions = listOf(
+        Option("", strings.optionAny), Option("dry", strings.optionDry),
+        Option("normal", strings.optionNormalHumidity), Option("humid", strings.optionHumid)
+    )
+    val windOptions = listOf(
+        Option("", strings.optionAny), Option("calm", strings.optionCalm),
+        Option("moderate", strings.optionModerate), Option("windy", strings.optionWindy)
+    )
+    val budgetOptions = listOf(
+        Option("", strings.optionAny), Option("200", "≤ 200€"),
+        Option("500", "≤ 500€"), Option("1000", "≤ 1 000€"),
+        Option("2000", "≤ 2 000€")
+    )
     // Compact peek header — always visible (first ~172dp)
     Column(
         modifier = Modifier
@@ -433,7 +464,7 @@ private fun FiltersPanel(
             )
             Spacer(Modifier.width(10.dp))
             Text(
-                "Personnalisez votre voyage",
+                strings.customizeTrip,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -442,7 +473,7 @@ private fun FiltersPanel(
         }
         Spacer(Modifier.height(12.dp))
         // First chip row visible in peek
-        FilterSection("☀️ Météo souhaitée", WEATHER_OPTIONS, weather, onWeatherChange)
+        FilterSection(strings.filterWeatherTitle, weatherOptions, weather, onWeatherChange)
         Spacer(Modifier.height(14.dp))
         // Hint to drag up
         Row(
@@ -453,7 +484,7 @@ private fun FiltersPanel(
             Icon(Icons.Default.KeyboardArrowUp, null,
                 tint = Color.White.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
             Text(
-                "  Glissez pour afficher tous les filtres",
+                strings.swipeHint,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.3f)
             )
@@ -471,7 +502,7 @@ private fun FiltersPanel(
                 OutlinedTextField(
                     value = origin,
                     onValueChange = onOriginChange,
-                    label = { Text("Aéroport de départ (optionnel)",
+                    label = { Text(strings.departureAirportLabel,
                         color = Color.White.copy(alpha = 0.5f),
                         style = MaterialTheme.typography.bodySmall) },
                     leadingIcon = { Icon(Icons.Default.FlightTakeoff, null,
@@ -492,10 +523,10 @@ private fun FiltersPanel(
                 }
             }
         }
-        item { FilterSection("🌡️ Température", TEMP_OPTIONS, temperature, onTemperatureChange) }
-        item { FilterSection("💧 Humidité", HUMIDITY_OPTIONS, humidity, onHumidityChange) }
-        item { FilterSection("💨 Vent", WIND_OPTIONS, wind, onWindChange) }
-        item { FilterSection("💶 Budget max", BUDGET_OPTIONS, budget, onBudgetChange) }
+        item { FilterSection(strings.filterTempTitle, tempOptions, temperature, onTemperatureChange) }
+        item { FilterSection(strings.filterHumidityTitle, humidityOptions, humidity, onHumidityChange) }
+        item { FilterSection(strings.filterWindTitle, windOptions, wind, onWindChange) }
+        item { FilterSection(strings.filterBudgetTitle, budgetOptions, budget, onBudgetChange) }
         if (uiState is InspirationUiState.Error) {
             item {
                 Row(
@@ -537,7 +568,7 @@ private fun FiltersPanel(
                     Icon(Icons.Default.AutoAwesome, null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "Trouver ma destination idéale",
+                        strings.findDestBtn,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         style = MaterialTheme.typography.titleSmall,
@@ -617,6 +648,7 @@ private fun FilterSection(
 private fun ResultsPanel(
     results: List<InspirationDestinationDto>,
     selectedCity: String?,
+    strings: AppStrings,
     onSelectCity: (String) -> Unit,
     onBook: (city: String, code: String) -> Unit,
     onReset: () -> Unit
@@ -631,13 +663,13 @@ private fun ResultsPanel(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "${results.size} destination${if (results.size > 1) "s" else ""} trouvée${if (results.size > 1) "s" else ""}",
+                    "${results.size} ${if (results.size > 1) strings.destWordPlural else strings.destWord} ${if (results.size > 1) strings.foundDestWordPlural else strings.foundDestWord}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Text(
-                    "Appuyez sur une carte pour zoomer",
+                    strings.tapToZoom,
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.35f)
                 )
@@ -653,7 +685,7 @@ private fun ResultsPanel(
                     Icon(Icons.Default.Refresh, null, tint = Color.White.copy(alpha = 0.7f),
                         modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("Refaire", color = Color.White.copy(alpha = 0.7f),
+                    Text(strings.btnRedo, color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.labelMedium)
                 }
             }
@@ -670,6 +702,7 @@ private fun ResultsPanel(
                     dest = dest,
                     isSelected = dest.city == selectedCity,
                     isTop = index == 0,
+                    strings = strings,
                     onSelect = { onSelectCity(dest.city ?: "") },
                     onBook = { onBook(dest.city ?: "", dest.code ?: "") }
                 )
@@ -685,6 +718,7 @@ private fun InspirationDestCard(
     dest: InspirationDestinationDto,
     isSelected: Boolean,
     isTop: Boolean,
+    strings: AppStrings,
     onSelect: () -> Unit,
     onBook: () -> Unit
 ) {
@@ -836,7 +870,7 @@ private fun InspirationDestCard(
                             Icon(Icons.Default.FlightTakeoff, null, tint = Color.White,
                                 modifier = Modifier.size(12.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("Vols", style = MaterialTheme.typography.labelSmall,
+                            Text(strings.btnBook, style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
@@ -850,6 +884,7 @@ private fun InspirationDestCard(
 private fun AirportPickerDialog(
     city: String,
     airports: List<AirportOption>,
+    strings: AppStrings,
     onSelect: (AirportOption) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -868,7 +903,7 @@ private fun AirportPickerDialog(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Aéroports de $city",
+                    "${strings.airportsOf} $city",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
@@ -878,7 +913,7 @@ private fun AirportPickerDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Sélectionnez un aéroport :",
+                    strings.selectAirportHint,
                     color = Color.White.copy(alpha = 0.55f),
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -945,7 +980,7 @@ private fun AirportPickerDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler", color = Color(0xFF818CF8))
+                Text(strings.cancel, color = Color(0xFF818CF8))
             }
         }
     )
