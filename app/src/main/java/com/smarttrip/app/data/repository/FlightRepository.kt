@@ -32,7 +32,9 @@ class FlightRepository @Inject constructor(
             if (response.isSuccessful) {
                 val body = response.body()!!
                 // Transformation raw backend JSON → FlightDto (modèle UI)
-                val flights = body.data?.flights?.map { it.toFlightDto() } ?: emptyList()
+                val flights = body.data?.flights?.map {
+                    it.toFlightDto(origin, destination, departureDate, returnDate, adults, cabinClass)
+                } ?: emptyList()
                 ApiResult.Success(flights)
             } else {
                 val errMsg = try {
@@ -86,10 +88,14 @@ class FlightRepository @Inject constructor(
             if (response.isSuccessful) {
                 ApiResult.Success(response.body()!!.favorites)
             } else {
-                ApiResult.Error("Erreur lors du chargement des favoris")
+                val errMsg = try {
+                    org.json.JSONObject(response.errorBody()?.string() ?: "")
+                        .optString("message", "Erreur ${response.code()}")
+                } catch (e: Exception) { "Erreur ${response.code()}" }
+                ApiResult.Error(errMsg)
             }
         } catch (e: Exception) {
-            ApiResult.Error("Impossible de se connecter au serveur")
+            ApiResult.Error("Réseau : ${e.localizedMessage ?: "Impossible de se connecter"}")
         }
     }
 
@@ -99,10 +105,14 @@ class FlightRepository @Inject constructor(
             if (response.isSuccessful) {
                 ApiResult.Success(response.body()?.favorite?.id?.toString() ?: "")
             } else {
-                ApiResult.Error("Erreur lors de l'ajout")
+                val errMsg = try {
+                    org.json.JSONObject(response.errorBody()?.string() ?: "")
+                        .optString("message", "Erreur ${response.code()}")
+                } catch (e: Exception) { "Erreur ${response.code()}" }
+                ApiResult.Error(errMsg)
             }
         } catch (e: Exception) {
-            ApiResult.Error("Impossible de se connecter au serveur")
+            ApiResult.Error("Réseau : ${e.localizedMessage ?: "Impossible d'ajouter"}")
         }
     }
 

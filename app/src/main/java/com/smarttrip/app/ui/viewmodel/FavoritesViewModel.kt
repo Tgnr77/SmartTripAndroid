@@ -38,9 +38,9 @@ class FavoritesViewModel @Inject constructor(
 
     fun deleteFavorite(id: String) {
         viewModelScope.launch {
-            when (flightRepository.deleteFavorite(id)) {
+            when (val result = flightRepository.deleteFavorite(id)) {
                 is ApiResult.Success -> _favorites.value = _favorites.value.filter { it.id?.toString() != id }
-                is ApiResult.Error   -> _error.value = "Erreur lors de la suppression"
+                is ApiResult.Error   -> _error.value = result.message
             }
         }
     }

@@ -39,6 +39,12 @@ fun FavoritesScreen(
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
+    // Chargement initial (authState peut déjà être Authenticated au premier rendu)
+    LaunchedEffect(Unit) {
+        if (authViewModel.uiState.value is AuthUiState.Authenticated) {
+            viewModel.loadFavorites()
+        }
+    }
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Authenticated -> viewModel.loadFavorites()

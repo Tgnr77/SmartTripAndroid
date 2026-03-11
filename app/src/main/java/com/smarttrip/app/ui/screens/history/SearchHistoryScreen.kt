@@ -41,6 +41,9 @@ fun SearchHistoryScreen(
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
+    LaunchedEffect(Unit) {
+        if (authViewModel.uiState.value is AuthUiState.Authenticated) viewModel.loadHistory()
+    }
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Authenticated -> viewModel.loadHistory()
