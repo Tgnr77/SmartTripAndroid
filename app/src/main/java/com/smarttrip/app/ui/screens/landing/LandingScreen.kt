@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -14,15 +14,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
+import com.smarttrip.app.ui.language.LanguageToggleButton
 import com.smarttrip.app.ui.theme.Blue600
 import com.smarttrip.app.ui.theme.Blue700
 import com.smarttrip.app.ui.theme.Blue900
 
 @Composable
 fun LandingScreen(
-    onNavigateToHome: () -> Unit,
+    onNavigateAsGuest: () -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -70,7 +76,7 @@ fun LandingScreen(
             Spacer(Modifier.height(32.dp))
 
             Text(
-                text = "Voyagez plus\nintelligement",
+                text = strings.landingTitle,
                 style = MaterialTheme.typography.displayLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -81,7 +87,7 @@ fun LandingScreen(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Score IA, prédictions de prix et\ndécouverte de destinations sur mesure.",
+                text = strings.landingSubtitle,
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.White.copy(alpha = 0.75f),
                 textAlign = TextAlign.Center
@@ -93,13 +99,13 @@ fun LandingScreen(
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
                 modifier = Modifier.padding(bottom = 40.dp)
             ) {
-                FeaturePill("🧠", "Score IA")
-                FeaturePill("📊", "500+ compa.")
-                FeaturePill("🌍", "Inspiration")
+                FeaturePill("🧠", strings.featureAI)
+                FeaturePill("📊", strings.featureCompa)
+                FeaturePill("🌍", strings.featureInspiration)
             }
 
             Button(
-                onClick = onNavigateToHome,
+                onClick = onNavigateAsGuest,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
@@ -107,7 +113,7 @@ fun LandingScreen(
                 ),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Explorer les vols", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(strings.btnGuestLogin, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
 
             Spacer(Modifier.height(12.dp))
@@ -119,9 +125,16 @@ fun LandingScreen(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Se connecter", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                Text(strings.btnSignIn, fontWeight = FontWeight.Medium, fontSize = 16.sp)
             }
         }
+
+        // Language selector – top right
+        LanguageToggleButton(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 16.dp)
+        )
     }
 }
 

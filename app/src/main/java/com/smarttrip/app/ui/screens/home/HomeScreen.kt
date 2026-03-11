@@ -32,6 +32,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.smarttrip.app.data.local.Airport
 import com.smarttrip.app.data.local.searchAirports
 import com.smarttrip.app.data.remote.models.TrendingDestinationDto
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
+import com.smarttrip.app.ui.language.LanguageToggleButton
 import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.HomeViewModel
 
@@ -73,6 +76,9 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
 
     val canSearch = originCode.isNotBlank() && destinationCode.isNotBlank() && departureDate.isNotBlank()
+
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
 
     var showDepartureDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
@@ -143,9 +149,10 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Brush.verticalGradient(listOf(Primary600, Primary900)))
-                    .padding(horizontal = 24.dp, vertical = 28.dp)
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 28.dp)
+                ) {
                     Text(
                         "✈ SmartTrip",
                         style = MaterialTheme.typography.titleMedium,
@@ -153,17 +160,22 @@ fun HomeScreen(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Trouvez les meilleurs vols",
+                        strings.homeHeroTitle,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Text(
-                        "Score IA • Prédictions ML • 500+ compagnies",
+                        strings.homeHeroSubtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
                     )
                 }
+                LanguageToggleButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 16.dp, end = 16.dp)
+                )
             }
         }
 

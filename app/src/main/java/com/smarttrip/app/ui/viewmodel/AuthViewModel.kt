@@ -21,6 +21,7 @@ sealed class AuthUiState {
     data class RequiresVerification(val email: String) : AuthUiState()
     data class NeedsEmailInput(val email: String) : AuthUiState() // après register
     object EmailVerified : AuthUiState() // email vérifié, rediriger vers login
+    object Guest : AuthUiState()         // navigation sans compte
 }
 
 @HiltViewModel
@@ -141,6 +142,11 @@ class AuthViewModel @Inject constructor(
                 else -> onResult(false, "Erreur")
             }
         }
+    }
+
+    // ─── Déconnexion ──────────────────────────────────────────────────────
+    fun continueAsGuest() {
+        _uiState.value = AuthUiState.Guest
     }
 
     // ─── Déconnexion ──────────────────────────────────────────────────────

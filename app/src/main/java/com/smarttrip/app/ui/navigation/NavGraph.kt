@@ -23,6 +23,8 @@ import com.smarttrip.app.ui.screens.inspiration.InspirationScreen
 import com.smarttrip.app.ui.screens.landing.LandingScreen
 import com.smarttrip.app.ui.screens.profile.ProfileScreen
 import com.smarttrip.app.ui.screens.search.SearchResultsScreen
+import com.smarttrip.app.ui.language.AppStrings
+import com.smarttrip.app.ui.language.LanguageManager
 import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 
@@ -51,13 +53,6 @@ data class BottomNavItem(
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
-val bottomNavItems = listOf(
-    BottomNavItem(Routes.HOME,      "Accueil",    Icons.Default.Home),
-    BottomNavItem(Routes.FAVORITES, "Favoris",    Icons.Default.Favorite),
-    BottomNavItem(Routes.HISTORY,   "Historique", Icons.Default.History),
-    BottomNavItem(Routes.PROFILE,   "Profil",     Icons.Default.Person),
-)
-
 val routesWithBottomBar = setOf(
     Routes.HOME,
     Routes.FAVORITES,
@@ -75,6 +70,17 @@ fun NavGraph(
     val authState by authViewModel.uiState.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val language by LanguageManager.language.collectAsState()
+    val bottomNavItems = remember(language) {
+        val s = AppStrings.forLanguage(language)
+        listOf(
+            BottomNavItem(Routes.HOME,      s.navHome,      Icons.Default.Home),
+            BottomNavItem(Routes.FAVORITES, s.navFavorites, Icons.Default.Favorite),
+            BottomNavItem(Routes.HISTORY,   s.navHistory,   Icons.Default.History),
+            BottomNavItem(Routes.PROFILE,   s.navProfile,   Icons.Default.Person),
+        )
+    }
 
     val showBottomBar = routesWithBottomBar.any { route ->
         currentRoute == route || currentRoute?.startsWith("$route?") == true
@@ -143,7 +149,10 @@ fun NavGraph(
             // ─── Auth ─────────────────────────────────────────────────────
             composable(Routes.LANDING) {
                 LandingScreen(
-                    onNavigateToHome = { navController.navigate(Routes.HOME) },
+                    onNavigateAsGuest = {
+                        authViewModel.continueAsGuest()
+                        navController.navigate(Routes.HOME)
+                    },
                     onNavigateToLogin = { navController.navigate(Routes.LOGIN) }
                 )
             }

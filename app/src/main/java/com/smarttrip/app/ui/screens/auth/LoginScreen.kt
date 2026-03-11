@@ -64,15 +64,6 @@ fun LoginScreen(
                 .background(Brush.horizontalGradient(listOf(Blue600, Blue700)))
         )
 
-        if (onBack != null) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.padding(top = 12.dp, start = 4.dp)
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -201,6 +192,16 @@ fun LoginScreen(
                 TextButton(onClick = onNavigateToRegister) {
                     Text("S'inscrire", fontWeight = FontWeight.SemiBold)
                 }
+            }
+        }
+
+        // Back button declared last so it sits on top of the scrollable Column
+        if (onBack != null) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.align(Alignment.TopStart).padding(top = 12.dp, start = 4.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
             }
         }
     }
