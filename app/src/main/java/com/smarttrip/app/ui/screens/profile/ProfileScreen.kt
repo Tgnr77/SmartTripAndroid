@@ -41,7 +41,7 @@ fun ProfileScreen(
     val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(authState) {
-        if (authState is AuthUiState.Unauthenticated) onLoginRequired()
+        if (authState is AuthUiState.Unauthenticated || authState is AuthUiState.Guest) onLoginRequired()
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {

@@ -42,7 +42,8 @@ fun FavoritesScreen(
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Authenticated -> viewModel.loadFavorites()
-            is AuthUiState.Unauthenticated -> onLoginRequired()
+            is AuthUiState.Unauthenticated,
+            is AuthUiState.Guest -> onLoginRequired()
             else -> Unit
         }
     }

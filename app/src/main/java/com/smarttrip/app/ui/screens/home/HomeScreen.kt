@@ -42,7 +42,6 @@ import com.smarttrip.app.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     onSearch: (String) -> Unit,
-    onInspiration: () -> Unit = {},
     prefillDestCode: String = "",
     prefillDestName: String = "",
     viewModel: HomeViewModel = hiltViewModel()
@@ -443,58 +442,6 @@ fun HomeScreen(
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
-                }
-            }
-        }
-
-        // ─── Bannière Mode Inspiration ────────────────────────────────────
-        item {
-            Card(
-                onClick = onInspiration,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .offset(y = (-8).dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(0.dp),
-                colors = CardDefaults.cardColors(containerColor = Blue50),
-                border = BorderStroke(1.dp, Blue100)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                Brush.linearGradient(listOf(Color(0xFF6366F1), Color(0xFF8B5CF6)))
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("✨", fontSize = 22.sp)
-                    }
-                    Spacer(Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            strings.inspirationTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Blue900
-                        )
-                        Text(
-                            strings.inspirationSubtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Slate500
-                        )
-                    }
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
-                        null,
-                        tint = Blue600,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
         }

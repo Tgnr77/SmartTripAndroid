@@ -44,7 +44,8 @@ fun SearchHistoryScreen(
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Authenticated -> viewModel.loadHistory()
-            is AuthUiState.Unauthenticated -> onLoginRequired()
+            is AuthUiState.Unauthenticated,
+            is AuthUiState.Guest -> onLoginRequired()
             else -> Unit
         }
     }

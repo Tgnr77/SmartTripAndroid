@@ -2,6 +2,7 @@ package com.smarttrip.app.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -75,10 +76,11 @@ fun NavGraph(
     val bottomNavItems = remember(language) {
         val s = AppStrings.forLanguage(language)
         listOf(
-            BottomNavItem(Routes.HOME,      s.navHome,      Icons.Default.Home),
-            BottomNavItem(Routes.FAVORITES, s.navFavorites, Icons.Default.Favorite),
-            BottomNavItem(Routes.HISTORY,   s.navHistory,   Icons.Default.History),
-            BottomNavItem(Routes.PROFILE,   s.navProfile,   Icons.Default.Person),
+            BottomNavItem(Routes.HOME,        s.navHome,        Icons.Default.Home),
+            BottomNavItem(Routes.FAVORITES,   s.navFavorites,   Icons.Default.Favorite),
+            BottomNavItem(Routes.HISTORY,     s.navHistory,     Icons.Default.History),
+            BottomNavItem(Routes.INSPIRATION, s.navInspiration, Icons.Default.Explore),
+            BottomNavItem(Routes.PROFILE,     s.navProfile,     Icons.Default.Person),
         )
     }
 
@@ -226,9 +228,6 @@ fun NavGraph(
                     prefillDestName = destName,
                     onSearch = { params ->
                         navController.navigate("${Routes.SEARCH_RESULTS}?$params")
-                    },
-                    onInspiration = {
-                        navController.navigate(Routes.INSPIRATION)
                     }
                 )
             }
