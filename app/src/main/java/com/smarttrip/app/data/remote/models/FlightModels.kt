@@ -215,6 +215,80 @@ data class RawSegmentDto(
     val stops: Int = 0
 )
 
+// ─── Mapping codes IATA → noms compagnies ────────────────────────────────────
+val AIRLINE_NAMES = mapOf(
+    "AF" to "Air France", "BA" to "British Airways", "LH" to "Lufthansa",
+    "KL" to "KLM", "IB" to "Iberia", "AZ" to "ITA Airways", "LX" to "Swiss",
+    "TK" to "Turkish Airlines", "EK" to "Emirates", "QR" to "Qatar Airways",
+    "EY" to "Etihad", "SQ" to "Singapore Airlines", "CX" to "Cathay Pacific",
+    "NH" to "ANA", "JL" to "Japan Airlines", "KE" to "Korean Air",
+    "OZ" to "Asiana", "CA" to "Air China", "MU" to "China Eastern",
+    "CZ" to "China Southern", "UA" to "United Airlines", "AA" to "American Airlines",
+    "DL" to "Delta", "WN" to "Southwest", "AC" to "Air Canada",
+    "QF" to "Qantas", "NZ" to "Air New Zealand", "LA" to "LATAM",
+    "G3" to "GOL", "AV" to "Avianca", "CM" to "Copa", "AM" to "Aeroméxico",
+    "VY" to "Vueling", "FR" to "Ryanair", "U2" to "easyJet", "W6" to "Wizz Air",
+    "LS" to "Jet2", "EW" to "Eurowings", "XK" to "Air Corsica",
+    "HV" to "Transavia", "TO" to "Transavia France",
+    "TP" to "TAP Portugal", "SK" to "SAS", "AY" to "Finnair",
+    "OS" to "Austrian", "SN" to "Brussels Airlines", "LO" to "LOT Polish",
+    "OK" to "Czech Airlines", "RO" to "TAROM", "BT" to "airBaltic",
+    "FZ" to "flydubai", "WY" to "Oman Air", "GF" to "Gulf Air",
+    "SV" to "Saudi Arabian Airlines", "ET" to "Ethiopian Airlines",
+    "KQ" to "Kenya Airways", "SA" to "South African Airways",
+    "MS" to "EgyptAir", "RJ" to "Royal Jordanian",
+    "AI" to "Air India", "6E" to "IndiGo", "IX" to "Air India Express",
+    "SL" to "Thai Lion Air", "FD" to "Thai AirAsia", "TG" to "Thai Airways",
+    "MH" to "Malaysia Airlines", "GA" to "Garuda Indonesia", "PR" to "Philippine Airlines",
+    "VN" to "Vietnam Airlines", "VJ" to "VietJet", "BR" to "EVA Air",
+    "CI" to "China Airlines", "OD" to "Batik Air", "QZ" to "AirAsia",
+    "D7" to "AirAsia X", "AK" to "AirAsia"
+)
+
+// Construit un lien de réservation vers le site de la compagnie avec pré-remplissage
+fun buildBookingUrl(
+    airlineCode: String?,
+    origin: String,
+    destination: String,
+    departureDate: String,   // YYYY-MM-DD
+    returnDate: String? = null,
+    adults: Int = 1,
+    cabinClass: String = "economy"
+): String {
+    // Format date compagnie : certaines attendent YYYYMMDD, d'autres YYYY-MM-DD
+    val dateCompact = departureDate.replace("-", "")
+    val retDateCompact = returnDate?.replace("-", "") ?: ""
+    val tripType = if (returnDate != null) "R" else "O"
+
+    return when (airlineCode?.uppercase()) {
+        "AF" -> {
+            val classCode = when (cabinClass) { "business" -> "C"; "first" -> "F"; else -> "M" }
+            val addReturn = if (returnDate != null) "&returnDate=${retDateCompact}" else ""
+            "https://wwws.airfrance.fr/search/offers?pax=ADT:$adults&bookingFlow=REWARD&origin=$origin&destination=$destination&outwardDate=$dateCompact${addReturn}&cabin=$classCode&lang=fr"
+        }
+        "KL" -> {
+            val addReturn = if (returnDate != null) "&returnDate=${retDateCompact}" else ""
+            "https://www.klm.com/search/offers?pax=ADT:$adults&origin=$origin&destination=$destination&outwardDate=$dateCompact${addReturn}&cabin=$cabinClass"
+        }
+        "LH" -> {
+            val classCode = when (cabinClass) { "business" -> "C"; "first" -> "F"; else -> "Y" }
+            "https://www.lufthansa.com/fr/fr/deeplink?dep=$origin&dst=$destination&date=$dateCompact&adults=$adults&cabin=$classCode"
+        }
+        "BA" -> {
+            val addReturn = if (returnDate != null) "&returnDate=${returnDate}" else ""
+            "https://www.britishairways.com/travel/redeem/execclub/_gf/en_gb?departing=$origin&arriving=$destination&departDate=${departureDate}${addReturn}&adult=$adults&cabin=$cabinClass"
+        }
+        "EK" -> "https://book.emirates.com/booking/b2c/public/shoppingcart.faces?journeyType=$tripType&from=$origin&to=$destination&depDate=$dateCompact&numOfAdults=$adults&cabinClass=${cabinClass.uppercase()}"
+        "QR" -> "https://booking.qatarairways.com/nsp/views/main.action?selectTrip=$tripType&fromStation=$origin&toStation=$destination&departingMon=$dateCompact&paxType=ADT&adults=$adults"
+        "TK" -> "https://www.turkishairlines.com/en-fr/flights/find-flights/?origin=$origin&destination=$destination&departureDate=$dateCompact&adult=$adults&cabin=$cabinClass"
+        else -> {
+            // URL Google Flights générique avec pré-remplissage universel
+            val addReturn = if (returnDate != null) "/$returnDate" else ""
+            "https://www.google.com/travel/flights/search?tfs=CBwQAhoeEgoyMDI1LTA1LTIxagcIARIDQ0RHcgcIARIDSE5EGgF-bGF5b3V0LnVpX2ZsaWdodF9zZWFyY2g%3D&q=flights+from+$origin+to+$destination+$departureDate${if (returnDate != null) "+return+$returnDate" else ""}&hl=fr"
+        }
+    }
+}
+
 // Parse "PT13H5M" → 785 minutes
 fun parseIsoDuration(s: String): Int {
     var min = 0
@@ -224,13 +298,23 @@ fun parseIsoDuration(s: String): Int {
 }
 
 // Convertit RawFlightDto (backend) → FlightDto (modèle UI existant)
-fun RawFlightDto.toFlightDto(): FlightDto {
-    val airline = airlineCodes?.firstOrNull()
+fun RawFlightDto.toFlightDto(
+    origin: String = "",
+    destination: String = "",
+    departureDate: String = "",
+    returnDate: String? = null,
+    adults: Int = 1,
+    cabinClass: String = "economy"
+): FlightDto {
+    val airlineCode = airlineCodes?.firstOrNull()
+    val airlineName = airlineCode?.let { AIRLINE_NAMES[it] } ?: airlineCode
+    val bookingLink = buildBookingUrl(airlineCode, origin, destination, departureDate, returnDate, adults, cabinClass)
     return FlightDto(
         id = id,
         price = price.total,
         currency = price.currency,
         aiScore = aiScore,
+        bookingLink = bookingLink,
         outbound = FlightSegmentDto(
             departureAirport = outbound.departure.airport,
             arrivalAirport   = outbound.arrival.airport,
@@ -238,7 +322,8 @@ fun RawFlightDto.toFlightDto(): FlightDto {
             arrivalTime      = outbound.arrival.time,
             duration         = parseIsoDuration(outbound.duration),
             stops            = outbound.stops,
-            airline          = airline
+            airline          = airlineName,
+            flightNumber     = airlineCode
         ),
         inbound = inbound?.let { seg ->
             FlightSegmentDto(
@@ -248,7 +333,8 @@ fun RawFlightDto.toFlightDto(): FlightDto {
                 arrivalTime      = seg.arrival.time,
                 duration         = parseIsoDuration(seg.duration),
                 stops            = seg.stops,
-                airline          = airline
+                airline          = airlineName,
+                flightNumber     = airlineCode
             )
         }
     )

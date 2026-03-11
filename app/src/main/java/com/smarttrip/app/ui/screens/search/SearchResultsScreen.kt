@@ -16,14 +16,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.smarttrip.app.data.remote.models.FlightDto
+import com.smarttrip.app.data.remote.models.FlightSegmentDto
 import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.SearchViewModel
 import com.smarttrip.app.ui.language.AppStrings
@@ -151,6 +157,9 @@ fun SearchResultsScreen(
                     items(flights) { flight ->
                         FlightCard(
                             flight = flight,
+                            passengers = passengers,
+                            returnDate = returnDate.ifBlank { null },
+                            cabinClass = cabinClass,
                             onToggleFavorite = { viewModel.toggleFavorite(flight) }
                         )
                     }
@@ -187,91 +196,163 @@ fun ShimmerFlightCard() {
 @Composable
 fun FlightCard(
     flight: FlightDto,
+    passengers: Int = 1,
+    returnDate: String? = null,
+    cabinClass: String = "economy",
     onToggleFavorite: () -> Unit
 ) {
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
+    val context = LocalContext.current
+
+    // Code IATA de la compagnie (stocké dans flightNumber après notre mapping)
+    val airlineCode = flight.outbound.flightNumber
+    val airlineName = flight.outbound.airline ?: airlineCode ?: ""
+    val logoUrl = airlineCode?.let {
+        "https://www.gstatic.com/flights/airline_logos/70px/${it.uppercase()}.png"
+    }
+
+    fun formatTime(dt: String): String {
+        // "2026-05-21T09:30:00" ou "2026-05-21T09:30" → "09:30"
+        return dt.substringAfter('T').take(5)
+    }
+    fun formatDate(dt: String): String {
+        // "2026-05-21T09:30:00" → "21/05"
+        val d = dt.substringBefore('T')
+        val parts = d.split("-")
+        return if (parts.size == 3) "${parts[2]}/${parts[1]}" else d
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(0.dp),
-        border = BorderStroke(1.dp, Slate200)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Score IA + Favori
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                if (flight.aiScore != null) {
-                    Surface(shape = RoundedCornerShape(6.dp), color = Blue50) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Stars, null, tint = Blue600, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("${flight.aiScore}/100", style = MaterialTheme.typography.labelSmall, color = Blue600, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                } else { Spacer(Modifier.width(1.dp)) }
-                IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
-                    Icon(
-                        if (flight.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = null,
-                        tint = if (flight.isFavorite) Rose500 else Slate300,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            Spacer(Modifier.height(8.dp))
 
-            // Trajet
+            // ── Ligne 1 : Logo + Compagnie + Score AI + Favori ──────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(flight.outbound.departureAirport, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Slate900)
-                    Text(flight.outbound.departureTime.take(16), style = MaterialTheme.typography.bodySmall, color = Slate500)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    val h = flight.outbound.duration / 60
-                    val m = flight.outbound.duration % 60
-                    Text("${h}h${m.toString().padStart(2, '0')}", style = MaterialTheme.typography.labelSmall, color = Slate500)
-                    Icon(Icons.Default.Flight, contentDescription = null, tint = Blue600, modifier = Modifier.size(18.dp))
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = if (flight.outbound.stops == 0) Blue50 else MaterialTheme.colorScheme.errorContainer
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Logo compagnie
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Slate100),
+                        contentAlignment = Alignment.Center
                     ) {
+                        if (logoUrl != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(logoUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = airlineName,
+                                modifier = Modifier.size(28.dp),
+                                contentScale = ContentScale.Fit,
+                                error = null
+                            )
+                        } else {
+                            Icon(Icons.Default.Flight, contentDescription = null,
+                                tint = Blue600, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Column {
                         Text(
-                            if (flight.outbound.stops == 0) strings.labelDirect else "${flight.outbound.stops} ${if (flight.outbound.stops > 1) strings.labelStops else strings.labelStop}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (flight.outbound.stops == 0) Blue600 else MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            airlineName,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Slate900,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (airlineCode != null) {
+                            Text(
+                                airlineCode,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Slate500
+                            )
+                        }
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (flight.aiScore != null) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = when {
+                                flight.aiScore >= 70 -> Color(0xFFDCFCE7)
+                                flight.aiScore >= 45 -> Blue50
+                                else -> Color(0xFFFFF3CD)
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Stars, null,
+                                    tint = when {
+                                        flight.aiScore >= 70 -> Color(0xFF16A34A)
+                                        flight.aiScore >= 45 -> Blue600
+                                        else -> Color(0xFFD97706)
+                                    },
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(Modifier.width(3.dp))
+                                Text(
+                                    "${flight.aiScore}/100",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when {
+                                        flight.aiScore >= 70 -> Color(0xFF16A34A)
+                                        flight.aiScore >= 45 -> Blue600
+                                        else -> Color(0xFFD97706)
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            if (flight.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = null,
+                            tint = if (flight.isFavorite) Rose500 else Slate300,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(flight.outbound.arrivalAirport, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Slate900)
-                    Text(flight.outbound.arrivalTime.take(16), style = MaterialTheme.typography.bodySmall, color = Slate500)
-                }
             }
 
-            // Compagnie
-            if (flight.outbound.airline != null) {
-                Spacer(Modifier.height(6.dp))
-                Surface(shape = RoundedCornerShape(6.dp), color = Slate100) {
-                    Text(
-                        flight.outbound.airline,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Slate700,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
+            Spacer(Modifier.height(14.dp))
+
+            // ── Ligne 2 : Trajet aller ──────────────────────────────────────
+            FlightSegmentRow(segment = flight.outbound, strings = strings)
+
+            // Trajet retour s'il existe
+            if (flight.inbound != null) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    color = Slate100,
+                    thickness = 1.dp
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
+                    Icon(Icons.Default.FlightLand, null, tint = Slate500, modifier = Modifier.size(12.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Retour", style = MaterialTheme.typography.labelSmall, color = Slate500)
                 }
+                FlightSegmentRow(segment = flight.inbound, strings = strings)
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = Slate200)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Slate200)
 
-            // Prix + réserver
+            // ── Ligne 3 : Prix + Réserver ────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -281,13 +362,16 @@ fun FlightCard(
                     Text(
                         "${flight.price.toInt()} ${flight.currency}",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
                         color = Blue600
                     )
-                    Text(strings.perPerson, style = MaterialTheme.typography.labelSmall, color = Slate500)
+                    Text(
+                        "${strings.perPerson} · $passengers pax",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Slate500
+                    )
                 }
                 if (flight.bookingLink != null) {
-                    val context = LocalContext.current
                     Button(
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(flight.bookingLink))
@@ -297,11 +381,109 @@ fun FlightCard(
                         colors = ButtonDefaults.buttonColors(containerColor = Blue600)
                     ) {
                         Icon(Icons.Default.OpenInBrowser, null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
+                        Spacer(Modifier.width(6.dp))
                         Text(strings.btnBook, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
+        }
+    }
+}
+
+// ─── Segment de vol (aller ou retour) ────────────────────────────────────────
+@Composable
+private fun FlightSegmentRow(segment: FlightSegmentDto, strings: AppStrings) {
+    fun formatTime(dt: String) = dt.substringAfter('T').take(5).ifBlank { dt.take(5) }
+    fun formatDate(dt: String): String {
+        val d = dt.substringBefore('T')
+        val p = d.split("-")
+        return if (p.size == 3) "${p[2]}/${p[1]}" else d
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Départ
+        Column(horizontalAlignment = Alignment.Start) {
+            Text(
+                formatTime(segment.departureTime),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Slate900
+            )
+            Text(
+                segment.departureAirport,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Slate700
+            )
+            Text(
+                formatDate(segment.departureTime),
+                style = MaterialTheme.typography.labelSmall,
+                color = Slate400
+            )
+        }
+
+        // Centre : durée + icône + stops
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f)
+        ) {
+            val h = segment.duration / 60
+            val m = segment.duration % 60
+            Text(
+                "${h}h${m.toString().padStart(2, '0')}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Slate500
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(width = 24.dp, height = 1.dp)
+                    .background(Slate300))
+                Icon(
+                    Icons.Default.Flight,
+                    contentDescription = null,
+                    tint = Blue600,
+                    modifier = Modifier.size(16.dp)
+                )
+                Box(modifier = Modifier.size(width = 24.dp, height = 1.dp)
+                    .background(Slate300))
+            }
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = if (segment.stops == 0) Color(0xFFDCFCE7) else MaterialTheme.colorScheme.errorContainer
+            ) {
+                Text(
+                    if (segment.stops == 0) strings.labelDirect
+                    else "${segment.stops} ${if (segment.stops > 1) strings.labelStops else strings.labelStop}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = if (segment.stops == 0) Color(0xFF16A34A) else MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+        }
+
+        // Arrivée
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                formatTime(segment.arrivalTime),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Slate900
+            )
+            Text(
+                segment.arrivalAirport,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Slate700
+            )
+            Text(
+                formatDate(segment.arrivalTime),
+                style = MaterialTheme.typography.labelSmall,
+                color = Slate400
+            )
         }
     }
 }
