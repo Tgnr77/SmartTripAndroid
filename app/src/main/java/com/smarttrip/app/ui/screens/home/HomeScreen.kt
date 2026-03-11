@@ -106,7 +106,7 @@ fun HomeScreen(
                 }) { Text("OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showDepartureDatePicker = false }) { Text("Annuler") }
+                TextButton(onClick = { showDepartureDatePicker = false }) { Text(strings.cancel) }
             }
         ) {
             DatePicker(state = departureDatePickerState, showModeToggle = false)
@@ -132,7 +132,7 @@ fun HomeScreen(
                 }) { Text("OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showReturnDatePicker = false }) { Text("Annuler") }
+                TextButton(onClick = { showReturnDatePicker = false }) { Text(strings.cancel) }
             }
         ) {
             DatePicker(state = returnDatePickerState, showModeToggle = false)
@@ -192,9 +192,9 @@ fun HomeScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     // Type de voyage
                     val tripTypes = listOf(
-                        "roundtrip" to "Aller-retour",
-                        "oneway" to "Aller simple",
-                        "multicity" to "Multi-villes"
+                        "roundtrip" to strings.tripRoundtrip,
+                        "oneway" to strings.tripOneWay,
+                        "multicity" to strings.tripMultiCity
                     )
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         tripTypes.forEachIndexed { index, (type, label) ->
@@ -221,7 +221,7 @@ fun HomeScreen(
                                 originSuggestions = searchAirports(it)
                                 showOriginDropdown = originSuggestions.isNotEmpty()
                             },
-                            label = { Text("Ville ou aéroport de départ") },
+                            label = { Text(strings.labelOrigin) },
                             leadingIcon = { Icon(Icons.Default.FlightTakeoff, null) },
                             trailingIcon = {
                                 if (origin.isNotEmpty()) {
@@ -276,7 +276,7 @@ fun HomeScreen(
                                 destinationSuggestions = searchAirports(it)
                                 showDestinationDropdown = destinationSuggestions.isNotEmpty()
                             },
-                            label = { Text("Ville ou aéroport de destination") },
+                            label = { Text(strings.labelDestination) },
                             leadingIcon = { Icon(Icons.Default.FlightLand, null) },
                             trailingIcon = {
                                 if (destination.isNotEmpty()) {
@@ -315,7 +315,8 @@ fun HomeScreen(
                     // ─── Dates ────────────────────────────────────────────
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         DateSelectionCard(
-                            label = "Départ",
+                            label = strings.labelDeparture,
+                            placeholder = strings.labelSelectDate,
                             dateValue = departureDate,
                             modifier = Modifier.weight(1f),
                             onClick = { showDepartureDatePicker = true },
@@ -323,7 +324,8 @@ fun HomeScreen(
                         )
                         if (tripType == "roundtrip") {
                             DateSelectionCard(
-                                label = "Retour",
+                                label = strings.labelReturn,
+                                placeholder = strings.labelSelectDate,
                                 dateValue = returnDate,
                                 modifier = Modifier.weight(1f),
                                 onClick = { showReturnDatePicker = true },
@@ -359,7 +361,7 @@ fun HomeScreen(
                             ) { Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp)) }
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                if (passengers > 1) "passagers" else "passager",
+                                if (passengers > 1) strings.labelPassengers else strings.labelPassenger,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -373,9 +375,9 @@ fun HomeScreen(
                             ) {
                                 Text(
                                     when (cabinClass) {
-                                        "economy" -> "Éco"
-                                        "business" -> "Business"
-                                        "first" -> "Première"
+                                        "economy" -> strings.cabinEco
+                                        "business" -> strings.cabinBusiness
+                                        "first" -> strings.cabinFirst
                                         else -> cabinClass
                                     },
                                     style = MaterialTheme.typography.bodySmall
@@ -383,7 +385,7 @@ fun HomeScreen(
                                 Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(16.dp))
                             }
                             DropdownMenu(expanded = expandedClass, onDismissRequest = { expandedClass = false }) {
-                                listOf("economy" to "Économique", "business" to "Business", "first" to "Première classe")
+                                listOf("economy" to strings.cabinEcoFull, "business" to strings.cabinBusinessFull, "first" to strings.cabinFirstFull)
                                     .forEach { (key, label) ->
                                         DropdownMenuItem(
                                             text = { Text(label) },
@@ -404,7 +406,7 @@ fun HomeScreen(
                         modifier = Modifier.clickable { directOnly = !directOnly }
                     ) {
                         Checkbox(checked = directOnly, onCheckedChange = { directOnly = it })
-                        Text("Vols directs uniquement", style = MaterialTheme.typography.bodyMedium)
+                        Text(strings.directFlightsOnly, style = MaterialTheme.typography.bodyMedium)
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -430,12 +432,12 @@ fun HomeScreen(
                     ) {
                         Icon(Icons.Default.Search, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Rechercher des vols", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(strings.searchFlights, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
 
                     if (!canSearch && (origin.isNotBlank() || destination.isNotBlank())) {
                         Text(
-                            "Sélectionnez aéroport dans la liste et une date",
+                            strings.searchHint,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp)
@@ -476,13 +478,13 @@ fun HomeScreen(
                     Spacer(Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Mode Inspiration",
+                            strings.inspirationTitle,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = Blue900
                         )
                         Text(
-                            "L'IA choisit votre destination selon vos envies",
+                            strings.inspirationSubtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = Slate500
                         )
@@ -507,7 +509,7 @@ fun HomeScreen(
                     Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "Destinations tendance",
+                        strings.trendingTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -519,7 +521,7 @@ fun HomeScreen(
                     }
                 } else if (trendingDestinations.isEmpty()) {
                     Text(
-                        "Aucune destination disponible pour le moment",
+                        strings.noDestinations,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -543,6 +545,7 @@ fun HomeScreen(
 @Composable
 fun DateSelectionCard(
     label: String,
+    placeholder: String = "Select",
     dateValue: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -576,7 +579,7 @@ fun DateSelectionCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    if (dateValue.isEmpty()) "Sélectionner" else dateValue,
+                    if (dateValue.isEmpty()) placeholder else dateValue,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (dateValue.isEmpty()) FontWeight.Normal else FontWeight.Medium,
                     color = if (dateValue.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,

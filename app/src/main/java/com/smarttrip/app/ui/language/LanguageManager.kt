@@ -23,15 +23,26 @@ import kotlinx.coroutines.flow.asStateFlow
 
 enum class AppLanguage(val code: String, val flag: String, val label: String) {
     FRENCH("fr", "🇫🇷", "FR"),
-    ENGLISH("en", "🇬🇧", "EN")
+    ENGLISH("en", "🇬🇧", "EN"),
+    SPANISH("es", "🇪🇸", "ES"),
+    CHINESE("zh", "🇨🇳", "ZH"),
+    JAPANESE("ja", "🇯🇵", "JA")
 }
 
 object LanguageManager {
+    private val _order = listOf(
+        AppLanguage.FRENCH,
+        AppLanguage.ENGLISH,
+        AppLanguage.SPANISH,
+        AppLanguage.CHINESE,
+        AppLanguage.JAPANESE
+    )
     private val _language = MutableStateFlow(AppLanguage.FRENCH)
     val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
     fun toggle() {
-        _language.value = if (_language.value == AppLanguage.FRENCH) AppLanguage.ENGLISH else AppLanguage.FRENCH
+        val idx = _order.indexOf(_language.value)
+        _language.value = _order[(idx + 1) % _order.size]
     }
 }
 
