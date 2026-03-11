@@ -81,10 +81,30 @@ fun HomeScreen(
 
     var showDepartureDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
+
+    // Today at midnight UTC for selectable dates minimum
+    val todayUtcMillis = remember {
+        val c = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        c.set(java.util.Calendar.HOUR_OF_DAY, 0); c.set(java.util.Calendar.MINUTE, 0)
+        c.set(java.util.Calendar.SECOND, 0); c.set(java.util.Calendar.MILLISECOND, 0)
+        c.timeInMillis
+    }
+
     val departureDatePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = System.currentTimeMillis()
+        initialSelectedDateMillis = todayUtcMillis,
+        selectableDates = object : androidx.compose.material3.SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= todayUtcMillis
+        }
     )
-    val returnDatePickerState = rememberDatePickerState()
+
+    // Return date must be >= departure + 1 day
+    val departureDateMillis = departureDatePickerState.selectedDateMillis
+    val returnMinMillis = if (departureDateMillis != null) departureDateMillis + 86_400_000L else todayUtcMillis + 86_400_000L
+    val returnDatePickerState = rememberDatePickerState(
+        selectableDates = object : androidx.compose.material3.SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis >= returnMinMillis
+        }
+    )
 
     if (showDepartureDatePicker) {
         DatePickerDialog(
@@ -100,6 +120,16 @@ fun HomeScreen(
                             cal.get(java.util.Calendar.MONTH) + 1,
                             cal.get(java.util.Calendar.DAY_OF_MONTH)
                         )
+                        // Clear return date if it's before new departure + 1
+                        if (returnDate.isNotBlank()) {
+                            val retParts = returnDate.split("-")
+                            if (retParts.size == 3) {
+                                val retCal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                                retCal.set(retParts[0].toInt(), retParts[1].toInt() - 1, retParts[2].toInt(), 0, 0, 0)
+                                retCal.set(java.util.Calendar.MILLISECOND, 0)
+                                if (retCal.timeInMillis <= millis) returnDate = ""
+                            }
+                        }
                     }
                     showDepartureDatePicker = false
                 }) { Text("OK") }
