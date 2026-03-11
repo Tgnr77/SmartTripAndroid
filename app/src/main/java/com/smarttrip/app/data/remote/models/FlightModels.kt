@@ -59,7 +59,7 @@ data class FavoritesResponse(
 
 // Les colonnes DB sont en snake_case, il faut les mapper vers camelCase
 data class FavoriteDto(
-    val id: Int? = null,   // DB integer primary key
+    val id: String? = null,   // UUID ou entier (string pour compatibilité)
     @SerializedName("price_amount") val price: Double = 0.0,
     @SerializedName("price_currency") val currency: String = "EUR",
     @SerializedName("origin_code") val originCode: String = "",
@@ -281,10 +281,30 @@ fun buildBookingUrl(
         "EK" -> "https://book.emirates.com/booking/b2c/public/shoppingcart.faces?journeyType=$tripType&from=$origin&to=$destination&depDate=$dateCompact&numOfAdults=$adults&cabinClass=${cabinClass.uppercase()}"
         "QR" -> "https://booking.qatarairways.com/nsp/views/main.action?selectTrip=$tripType&fromStation=$origin&toStation=$destination&departingMon=$dateCompact&paxType=ADT&adults=$adults"
         "TK" -> "https://www.turkishairlines.com/en-fr/flights/find-flights/?origin=$origin&destination=$destination&departureDate=$dateCompact&adult=$adults&cabin=$cabinClass"
+        "KE" -> {
+            val tripTypeKe = if (returnDate != null) "round" else "one-way"
+            val retKe = if (returnDate != null) "&returnDate=$returnDate" else ""
+            "https://www.koreanair.com/booking/availability?lang=en&tripType=$tripTypeKe&from=$origin&to=$destination&departureDate=$departureDate${retKe}&adult=$adults"
+        }
+        "SQ" -> "https://www.singaporeair.com/en_UK/ppsclub-krisflyer/book-flights/?tripType=${if (returnDate != null) "RC" else "OW"}&origin=$origin&destination=$destination&departureDate=$departureDate${if (returnDate != null) "&returnDate=$returnDate" else ""}&numOfAdults=$adults"
+        "UA" -> "https://www.united.com/ual/en/us/flight-search/book-a-flight/results/aff?f=$origin&t=$destination&d=$departureDate${if (returnDate != null) "&r=$returnDate" else ""}&tt=${if (returnDate != null) "2" else "1"}&sc=7&px=$adults&taxng=1&newHP=True"
+        "AA" -> "https://www.aa.com/booking/search?locale=en_US&pax=$adults&adult=$adults&type=${if (returnDate != null) "RoundTrip" else "OneWay"}&searchType=AA&cabin=&carriers=AA&sl=2&s=true&origin=$origin&destination=$destination&departureDate=$departureDate${if (returnDate != null) "&returnDate=$returnDate" else ""}"
+        "JL" -> "https://www.jal.co.jp/en/inter/booking/?SEARCH_FORM=FORM&TRIP_TYPE=${if (returnDate != null) "RT" else "OW"}&DEP=$origin&ARR=$destination&DEP_DATE=$dateCompact${if (returnDate != null) "&RET_DATE=$retDateCompact" else ""}&ADT=$adults"
+        "NH" -> "https://www.anagroup.co.jp/en/international/booking/form/?org=$origin&dst=$destination&dep=$dateCompact${if (returnDate != null) "&ret=$retDateCompact" else ""}&adt=$adults"
+        "AC" -> "https://www.aircanada.com/aeroplan/redeem/availability/outbound?org=$origin&dest=$destination&departureDate=$departureDate${if (returnDate != null) "&returnDate=$returnDate" else ""}&lang=fr-CA&adults=$adults"
+        "QF" -> "https://www.qantas.com/au/en/book-a-trip/flights/find.html?adults=$adults&cabinType=${if (cabinClass == "business") "business" else "economy"}&departureDate=$departureDate${if (returnDate != null) "&returnDate=$returnDate" else ""}&destinationCode=$destination&tripType=${if (returnDate != null) "return" else "oneway"}&originCode=$origin"
         else -> {
-            // URL Google Flights générique avec pré-remplissage universel
-            val addReturn = if (returnDate != null) "/$returnDate" else ""
-            "https://www.google.com/travel/flights/search?tfs=CBwQAhoeEgoyMDI1LTA1LTIxagcIARIDQ0RHcgcIARIDSE5EGgF-bGF5b3V0LnVpX2ZsaWdodF9zZWFyY2g%3D&q=flights+from+$origin+to+$destination+$departureDate${if (returnDate != null) "+return+$returnDate" else ""}&hl=fr"
+            // Fallback Kayak — fonctionne pour toutes les compagnies avec pré-remplissage
+            val cabinKayak = when (cabinClass.lowercase()) {
+                "business" -> "business"
+                "first" -> "firstclass"
+                else -> "economy"
+            }
+            if (returnDate != null) {
+                "https://www.kayak.fr/flights/$origin-$destination/$departureDate/$returnDate/${adults}adults?cabin=$cabinKayak"
+            } else {
+                "https://www.kayak.fr/flights/$origin-$destination/$departureDate/${adults}adults?cabin=$cabinKayak"
+            }
         }
     }
 }

@@ -103,7 +103,7 @@ class FlightRepository @Inject constructor(
         return try {
             val response = api.addFavorite(request)
             if (response.isSuccessful) {
-                ApiResult.Success(response.body()?.favorite?.id?.toString() ?: "")
+                ApiResult.Success(response.body()?.favorite?.id ?: "")
             } else {
                 val errMsg = try {
                     org.json.JSONObject(response.errorBody()?.string() ?: "")

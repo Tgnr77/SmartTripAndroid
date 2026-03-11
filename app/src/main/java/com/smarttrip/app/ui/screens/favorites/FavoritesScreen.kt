@@ -79,8 +79,8 @@ fun FavoritesScreen(
                 }
             }
             else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(favorites, key = { it.id ?: 0 }) { fav ->
-                    FavoriteCard(fav, onDelete = { viewModel.deleteFavorite(fav.id?.toString() ?: "") })
+                items(favorites, key = { it.id ?: "" }) { fav ->
+                    FavoriteCard(fav, onDelete = { viewModel.deleteFavorite(fav.id ?: "") })
                 }
             }
         }
