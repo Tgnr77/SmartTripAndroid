@@ -81,6 +81,8 @@ fun GlobeWebView(
                 settings.mediaPlaybackRequiresUserGesture = false
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
+                // Hardware acceleration for smooth WebGL rendering
+                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                 // Only enable remote debugging in debug builds
                 if (com.smarttrip.app.BuildConfig.DEBUG) {
                     WebView.setWebContentsDebuggingEnabled(true)

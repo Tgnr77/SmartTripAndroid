@@ -8,6 +8,22 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
   canvas { display: block; }
+  /* Loading overlay */
+  #loader {
+    position: fixed; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    background: #000; z-index: 999;
+    transition: opacity 0.7s ease;
+  }
+  #loader.hidden { opacity: 0; pointer-events: none; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid rgba(99,102,241,0.25);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   #tooltip {
     position: absolute; display: none; background: rgba(10,10,30,0.92);
     border: 1px solid rgba(255,255,255,0.25); border-radius: 10px;
@@ -21,6 +37,7 @@
 </style>
 </head>
 <body>
+<div id="loader"><div class="spinner"></div></div>
 <div id="tooltip"><div class="city"></div><div class="country"></div><div class="weather"></div></div>
 
 <script type="importmap">
@@ -94,10 +111,23 @@ const DESTINATIONS = [
 const scene = new THREE.Scene();
 const W = window.innerWidth, H = window.innerHeight;
 const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 1000);
-camera.position.set(0, 0, 8);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-renderer.setPixelRatio(window.devicePixelRatio);
+// Compute ideal camera Z so the FULL globe fits within the narrowest viewport dimension
+const RADIUS = 2.5;
+function computeDefaultZ() {
+  const aspect = window.innerWidth / window.innerHeight;
+  const vFovRad = camera.fov * Math.PI / 180;
+  const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+  const minFovRad = Math.min(vFovRad, hFovRad);
+  // angularRadius of sphere = arcsin(R/D). We want it = minFovRad/2 * 0.90 (10% margin)
+  return RADIUS / Math.sin((minFovRad / 2) * 0.90);
+}
+let defaultCameraZ = computeDefaultZ();
+camera.position.set(0, 0, defaultCameraZ);
+
+// Performance: cap pixel ratio + high-performance GPU hint
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(W, H);
 renderer.setClearColor(0x000000, 1);
 document.body.appendChild(renderer.domElement);
@@ -105,8 +135,8 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minDistance = 4;
-controls.maxDistance = 18;
+controls.minDistance = RADIUS + 1.5;
+controls.maxDistance = defaultCameraZ + 5;
 controls.rotateSpeed = 0.7;
 controls.zoomSpeed = 0.7;
 controls.enablePan = false;
@@ -124,7 +154,7 @@ scene.add(fill);
 {
   const geo = new THREE.BufferGeometry();
   const positions = [];
-  for (let i = 0; i < 8000; i++) {
+  for (let i = 0; i < 4000; i++) {
     const theta = Math.random() * 2 * Math.PI;
     const phi = Math.acos(2 * Math.random() - 1);
     const r = 200 + Math.random() * 100;
@@ -138,32 +168,34 @@ scene.add(fill);
 const globeGroup = new THREE.Group();
 scene.add(globeGroup);
 
-// Earth textures
+// Earth textures — loader with crossOrigin for CDN
 const loader = new THREE.TextureLoader();
+loader.crossOrigin = 'anonymous';
 let earthReady = false;
 let globe; // mesh
 
 const earthTex = loader.load(
   'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
-  () => { earthReady = true; }
+  () => {
+    earthReady = true;
+    // Fade out loading overlay
+    const loaderEl = document.getElementById('loader');
+    if (loaderEl) loaderEl.classList.add('hidden');
+  }
 );
 const bumpTex = loader.load('https://unpkg.com/three-globe/example/img/earth-topology.png');
 
+// Reduced segments (48→ vs 64) for better mobile performance — visually identical
 globe = new THREE.Mesh(
-  new THREE.SphereGeometry(2.5, 64, 64),
+  new THREE.SphereGeometry(RADIUS, 48, 48),
   new THREE.MeshStandardMaterial({ map: earthTex, bumpMap: bumpTex, bumpScale: 0.05 })
 );
 globeGroup.add(globe);
 
-// Cloud layer
-const cloudMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(2.502, 48, 48),
-  new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 1 })
-);
-globeGroup.add(cloudMesh);
+// NOTE: Cloud layer removed — the untextured translucent sphere caused visible polygon
+// banding artifacts (stripe lines) across the globe.
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const RADIUS = 2.5;
 function latLonToVec3(lat, lon, r = RADIUS + 0.055) {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
@@ -308,7 +340,7 @@ window.resetView = function() {
     startTime: performance.now(),
     duration: 1800,
     from: camera.position.clone(),
-    to: new THREE.Vector3(0, 0, 8)
+    to: new THREE.Vector3(0, 0, defaultCameraZ)
   };
 };
 
@@ -422,7 +454,6 @@ function easeInOut(t) {
 // ── Render loop ───────────────────────────────────────────────────────────────
 const clock = new THREE.Clock();
 function animate() {
-  requestAnimationFrame(animate);
   const delta = clock.getDelta();
   const t = clock.getElapsedTime();
 
@@ -431,8 +462,7 @@ function animate() {
     globeGroup.rotation.y += autoRotateSpeed * delta;
   }
 
-  // Cloud drift
-  cloudMesh.rotation.y += 0.05 * delta;
+  // (Cloud layer removed — was causing white stripe artifacts)
 
   // Click glow animation (expand + fade)
   if (clickGlowAnim) {
@@ -488,10 +518,13 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
 }
-animate();
+// Use setAnimationLoop (optimized for WebGL on Android — avoids requestAnimationFrame overhead)
+renderer.setAnimationLoop(animate);
 
 // ── Resize ────────────────────────────────────────────────────────────────────
 window.addEventListener('resize', () => {
+  defaultCameraZ = computeDefaultZ();
+  controls.maxDistance = defaultCameraZ + 5;
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
