@@ -94,7 +94,14 @@ const DESTINATIONS = [
 const scene = new THREE.Scene();
 const W = window.innerWidth, H = window.innerHeight;
 const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 1000);
-camera.position.set(0, 0, 8);
+// Compute initial camera distance so the globe fits fully in any screen orientation.
+// On portrait phones the horizontal FOV is narrower than the vertical FOV, so we
+// use the tighter dimension and add a 20% margin around the globe (radius 2.5).
+const GLOBE_RADIUS = 2.5;
+const vFovRad = (50 * Math.PI) / 180;
+const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * (W / H));
+const initialZ = Math.max(8, (GLOBE_RADIUS * 1.2) / Math.sin(Math.min(vFovRad, hFovRad) / 2));
+camera.position.set(0, 0, initialZ);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -308,7 +315,7 @@ window.resetView = function() {
     startTime: performance.now(),
     duration: 1800,
     from: camera.position.clone(),
-    to: new THREE.Vector3(0, 0, 8)
+    to: new THREE.Vector3(0, 0, initialZ)
   };
 };
 
