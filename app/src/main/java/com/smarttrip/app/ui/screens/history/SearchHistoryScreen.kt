@@ -124,6 +124,7 @@ fun SearchHistoryScreen(
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun HistoryCard(
     entry: SearchHistoryDto,
     onDelete: () -> Unit,
@@ -153,17 +154,17 @@ fun HistoryCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Surface(shape = RoundedCornerShape(6.dp), color = Slate100) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)) {
                         Icon(Icons.Default.DateRange, null, modifier = Modifier.size(12.dp), tint = Slate500)
                         Spacer(Modifier.width(4.dp))
-                        Text(entry.departureDate, style = MaterialTheme.typography.labelSmall, color = Slate700)
+                        Text(entry.departureDate.substringBefore('T'), style = MaterialTheme.typography.labelSmall, color = Slate700)
                     }
                 }
                 if (entry.returnDate != null) {
                     Surface(shape = RoundedCornerShape(6.dp), color = Slate100) {
-                        Text("↩ ${entry.returnDate}", style = MaterialTheme.typography.labelSmall, color = Slate700, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                        Text("↩ ${entry.returnDate.substringBefore('T')}", style = MaterialTheme.typography.labelSmall, color = Slate700, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
                     }
                 }
                 Surface(shape = RoundedCornerShape(6.dp), color = Slate100) {
