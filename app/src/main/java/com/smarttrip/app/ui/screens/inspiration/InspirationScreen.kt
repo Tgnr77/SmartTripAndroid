@@ -272,7 +272,13 @@ fun InspirationScreen(
             }
         }
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.radialGradient(
+                0.0f to Color(0xFF0b1a3e),
+                0.55f to Color(0xFF040e24),
+                1.0f to Color(0xFF000000)
+            ))) {
 
             // ── Globe (full screen) ──────────────────────────────────────
             GlobeWebView(

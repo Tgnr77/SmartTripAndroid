@@ -81,6 +81,8 @@ fun GlobeWebView(
                 settings.mediaPlaybackRequiresUserGesture = false
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
+                // Transparent background so the CSS gradient shows through
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 // Hardware acceleration for smooth WebGL rendering
                 setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                 // Only enable remote debugging in debug builds
