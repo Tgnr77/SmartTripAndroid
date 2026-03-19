@@ -78,11 +78,22 @@ class InspirationViewModel @Inject constructor(
             )
             when (val result = flightRepository.getInspiration(request)) {
                 is ApiResult.Success -> {
-                    val destinations = result.data
-                    if (destinations.isEmpty()) {
+                    val weatherKey = weather.value
+                    val filtered = if (weatherKey.isEmpty()) result.data else result.data.filter { dest ->
+                        val desc = (dest.weather?.description ?: dest.weather?.weatherType ?: "").lowercase()
+                        when (weatherKey) {
+                            "sunny"  -> listOf("dégagé", "ensoleillé", "clear", "sunny", "beau", "soleil").any { desc.contains(it) }
+                            "cloudy" -> listOf("nuageux", "couvert", "cloudy", "overcast", "brumeux").any { desc.contains(it) }
+                            "rainy"  -> listOf("pluie", "averse", "rain", "shower", "bruine", "drizzle").any { desc.contains(it) }
+                            "snowy"  -> listOf("neige", "snow", "blizzard").any { desc.contains(it) }
+                            "stormy" -> listOf("orage", "storm", "thunder", "foudre").any { desc.contains(it) }
+                            else     -> true
+                        }
+                    }
+                    if (filtered.isEmpty()) {
                         _uiState.value = InspirationUiState.Error("Aucune destination trouvée pour ces critères")
                     } else {
-                        _uiState.value = InspirationUiState.Success(destinations)
+                        _uiState.value = InspirationUiState.Success(filtered)
                     }
                 }
                 is ApiResult.Error -> _uiState.value = InspirationUiState.Error(result.message)

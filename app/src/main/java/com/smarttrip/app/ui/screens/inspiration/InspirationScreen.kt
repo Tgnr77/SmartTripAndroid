@@ -147,6 +147,7 @@ fun InspirationScreen(
     val globeController = rememberGlobeController()
     var globeReady    by remember { mutableStateOf(false) }
     val scaffoldState = rememberBottomSheetScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
 
@@ -196,6 +197,7 @@ fun InspirationScreen(
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
+        containerColor = Color.Transparent,
         sheetPeekHeight = 172.dp,
         sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         sheetContainerColor = SheetBg,
@@ -229,7 +231,11 @@ fun InspirationScreen(
                     strings = strings,
                     onSelectCity = { city ->
                         selectedCity = city
+                        destQuery = city
                         globeController.zoomToCity(city)
+                        coroutineScope.launch {
+                            scaffoldState.bottomSheetState.partialExpand()
+                        }
                     },
                     onBook = { city, code ->
                         navigateToDestination(city, code)
@@ -275,8 +281,8 @@ fun InspirationScreen(
         Box(modifier = Modifier
             .fillMaxSize()
             .background(Brush.radialGradient(
-                0.0f to Color(0xFF0b1a3e),
-                0.55f to Color(0xFF040e24),
+                0.0f to Color(0xFF1a3a6e),
+                0.55f to Color(0xFF0b1a3e),
                 1.0f to Color(0xFF000000)
             ))) {
 
