@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import com.smarttrip.app.data.local.Airport
 import com.smarttrip.app.data.local.searchAirports
 import com.smarttrip.app.data.remote.models.InspirationDestinationDto
