@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -136,6 +137,9 @@ fun InspirationScreen(
     var originSuggestions by remember { mutableStateOf(listOf<Airport>()) }
     var showOriginDropdown by remember { mutableStateOf(false) }
     var selectedCity  by remember { mutableStateOf<String?>(null) }
+    var destQuery     by remember { mutableStateOf("") }
+    var destSuggestions by remember { mutableStateOf(listOf<Airport>()) }
+    var showDestDropdown by remember { mutableStateOf(false) }
 
     // Multi-airport dialog state
     var airportPickerCity by remember { mutableStateOf<String?>(null) }
@@ -176,6 +180,7 @@ fun InspirationScreen(
                 globeController.highlightDestinations(results)
                 results.firstOrNull()?.city?.let { city ->
                     selectedCity = city
+                    destQuery = city
                     globeController.zoomToCity(city)
                 }
             }
@@ -233,6 +238,7 @@ fun InspirationScreen(
                         viewModel.reset()
                         globeController.resetView()
                         selectedCity = null
+                        destQuery = ""
                     }
                 )
                 else -> FiltersPanel(
@@ -275,6 +281,7 @@ fun InspirationScreen(
                 onGlobeReady = { globeReady = true },
                 onMarkerClick = { city ->
                     selectedCity = city
+                    destQuery = city
                     globeController.zoomToCity(city)
                     // Find airport code: check results first, then default map
                     val code = results.find { it.city.equals(city, ignoreCase = true) }?.code

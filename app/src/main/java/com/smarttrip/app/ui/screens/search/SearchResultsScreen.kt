@@ -32,6 +32,8 @@ import com.smarttrip.app.data.remote.models.FlightDto
 import com.smarttrip.app.data.remote.models.FlightSegmentDto
 import com.smarttrip.app.ui.theme.*
 import com.smarttrip.app.ui.viewmodel.SearchViewModel
+import com.smarttrip.app.ui.viewmodel.AuthViewModel
+import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
 
@@ -40,8 +42,11 @@ import com.smarttrip.app.ui.language.LanguageManager
 fun SearchResultsScreen(
     args: Bundle?,
     onBack: () -> Unit,
-    viewModel: SearchViewModel = hiltViewModel()
+    viewModel: SearchViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
+    val authState by authViewModel.uiState.collectAsState()
+    val isGuest = authState is AuthUiState.Guest
     val origin = args?.getString("origin") ?: ""
     val destination = args?.getString("destination") ?: ""
     val departureDate = args?.getString("departureDate") ?: ""
@@ -160,6 +165,7 @@ fun SearchResultsScreen(
                             passengers = passengers,
                             returnDate = returnDate.ifBlank { null },
                             cabinClass = cabinClass,
+                            showFavorite = !isGuest,
                             onToggleFavorite = { viewModel.toggleFavorite(flight) }
                         )
                     }
@@ -199,6 +205,7 @@ fun FlightCard(
     passengers: Int = 1,
     returnDate: String? = null,
     cabinClass: String = "economy",
+    showFavorite: Boolean = true,
     onToggleFavorite: () -> Unit
 ) {
     val language by LanguageManager.language.collectAsState()
@@ -319,13 +326,15 @@ fun FlightCard(
                         }
                         Spacer(Modifier.width(4.dp))
                     }
-                    IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            if (flight.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            tint = if (flight.isFavorite) Rose500 else Slate300,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    if (showFavorite) {
+                        IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                if (flight.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                tint = if (flight.isFavorite) Rose500 else Slate300,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }

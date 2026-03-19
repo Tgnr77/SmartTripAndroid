@@ -137,6 +137,8 @@ fun HomeScreen(
                         }
                     }
                     showDepartureDatePicker = false
+                    // En aller-retour, enchaîner directement sur le retour
+                    if (tripType == "roundtrip") showReturnDatePicker = true
                 }) { Text("OK") }
             },
             dismissButton = {

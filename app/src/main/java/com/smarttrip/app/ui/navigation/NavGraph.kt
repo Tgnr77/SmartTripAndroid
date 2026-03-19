@@ -73,15 +73,16 @@ fun NavGraph(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val language by LanguageManager.language.collectAsState()
-    val bottomNavItems = remember(language) {
+    val isGuest = authState is AuthUiState.Guest
+    val bottomNavItems = remember(language, isGuest) {
         val s = AppStrings.forLanguage(language)
-        listOf(
-            BottomNavItem(Routes.HOME,        s.navHome,        Icons.Default.Home),
-            BottomNavItem(Routes.FAVORITES,   s.navFavorites,   Icons.Default.Favorite),
-            BottomNavItem(Routes.HISTORY,     s.navHistory,     Icons.Default.History),
-            BottomNavItem(Routes.INSPIRATION, s.navInspiration, Icons.Default.Explore),
-            BottomNavItem(Routes.PROFILE,     s.navProfile,     Icons.Default.Person),
-        )
+        buildList {
+            add(BottomNavItem(Routes.HOME,        s.navHome,        Icons.Default.Home))
+            if (!isGuest) add(BottomNavItem(Routes.FAVORITES,   s.navFavorites,   Icons.Default.Favorite))
+            if (!isGuest) add(BottomNavItem(Routes.HISTORY,     s.navHistory,     Icons.Default.History))
+            add(BottomNavItem(Routes.INSPIRATION, s.navInspiration, Icons.Default.Explore))
+            add(BottomNavItem(Routes.PROFILE,     s.navProfile,     Icons.Default.Person))
+        }
     }
 
     val showBottomBar = routesWithBottomBar.any { route ->

@@ -6,13 +6,13 @@
 <title>SmartTrip Globe</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
+  body { background: radial-gradient(ellipse at center, #0b1a3e 0%, #040e24 55%, #000000 100%); overflow: hidden; width: 100vw; height: 100vh; }
   canvas { display: block; }
   /* Loading overlay */
   #loader {
     position: fixed; inset: 0; display: flex;
     align-items: center; justify-content: center;
-    background: #000; z-index: 999;
+    background: radial-gradient(ellipse at center, #0b1a3e 0%, #040e24 55%, #000000 100%); z-index: 999;
     transition: opacity 0.7s ease;
   }
   #loader.hidden { opacity: 0; pointer-events: none; }
@@ -126,10 +126,10 @@ let defaultCameraZ = computeDefaultZ();
 camera.position.set(0, 0, defaultCameraZ);
 
 // Performance: cap pixel ratio + high-performance GPU hint
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(W, H);
-renderer.setClearColor(0x000000, 1);
+renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
