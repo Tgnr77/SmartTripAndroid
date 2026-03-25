@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,12 +48,14 @@ object LanguageManager {
 }
 
 @Composable
-fun LanguageToggleButton(modifier: Modifier = Modifier) {
+fun LanguageToggleButton(modifier: Modifier = Modifier, onDark: Boolean = true) {
     val language by LanguageManager.language.collectAsState()
+    val textColor = if (onDark) Color.White else MaterialTheme.colorScheme.onSurface
+    val bgColor   = if (onDark) Color.White.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceVariant
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.18f))
+            .background(bgColor)
             .clickable { LanguageManager.toggle() }
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -64,7 +67,7 @@ fun LanguageToggleButton(modifier: Modifier = Modifier) {
         )
         Text(
             text = language.label,
-            color = Color.White,
+            color = textColor,
             fontWeight = FontWeight.SemiBold,
             fontSize = 12.sp
         )

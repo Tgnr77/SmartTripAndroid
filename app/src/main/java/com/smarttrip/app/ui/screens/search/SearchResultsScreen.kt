@@ -289,43 +289,6 @@ fun FlightCard(
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (flight.aiScore != null) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = when {
-                                flight.aiScore >= 70 -> Color(0xFFDCFCE7)
-                                flight.aiScore >= 45 -> Blue50
-                                else -> Color(0xFFFFF3CD)
-                            }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.Stars, null,
-                                    tint = when {
-                                        flight.aiScore >= 70 -> Color(0xFF16A34A)
-                                        flight.aiScore >= 45 -> Blue600
-                                        else -> Color(0xFFD97706)
-                                    },
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(Modifier.width(3.dp))
-                                Text(
-                                    "${flight.aiScore}/100",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = when {
-                                        flight.aiScore >= 70 -> Color(0xFF16A34A)
-                                        flight.aiScore >= 45 -> Blue600
-                                        else -> Color(0xFFD97706)
-                                    }
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(4.dp))
-                    }
                     if (showFavorite) {
                         IconButton(onClick = onToggleFavorite, modifier = Modifier.size(32.dp)) {
                             Icon(

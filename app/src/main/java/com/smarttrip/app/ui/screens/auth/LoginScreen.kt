@@ -32,6 +32,7 @@ import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
+import com.smarttrip.app.ui.language.LanguageToggleButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +73,7 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -199,7 +200,7 @@ fun LoginScreen(
             }
         }
 
-        // Back button declared last so it sits on top of the scrollable Column
+        // Back button — overlaid top-left
         if (onBack != null) {
             IconButton(
                 onClick = onBack,
@@ -208,5 +209,12 @@ fun LoginScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
             }
         }
+        // Language toggle — overlaid top-right
+        LanguageToggleButton(
+            onDark = false,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 16.dp)
+        )
     }
 }

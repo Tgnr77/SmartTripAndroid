@@ -28,6 +28,7 @@ import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
+import com.smarttrip.app.ui.language.LanguageToggleButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,18 +66,10 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateToLogin) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
-                }
-            }
 
             Box(
                 modifier = Modifier
@@ -88,7 +81,7 @@ fun RegisterScreen(
                 Text("✈", fontSize = 28.sp)
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
 
             Text(
                 strings.registerTitle,
@@ -205,5 +198,20 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(24.dp))
         }
+
+        // Back button — overlaid top-left
+        IconButton(
+            onClick = onNavigateToLogin,
+            modifier = Modifier.align(Alignment.TopStart).padding(top = 12.dp, start = 4.dp)
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.back)
+        }
+        // Language toggle — overlaid top-right
+        LanguageToggleButton(
+            onDark = false,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 16.dp)
+        )
     }
 }

@@ -323,7 +323,6 @@ fun InspirationScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
                     .background(
                         Brush.verticalGradient(
                             listOf(Color.Black.copy(alpha = 0.75f), Color.Transparent)
@@ -333,6 +332,7 @@ fun InspirationScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .statusBarsPadding()
                         .padding(horizontal = 4.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
