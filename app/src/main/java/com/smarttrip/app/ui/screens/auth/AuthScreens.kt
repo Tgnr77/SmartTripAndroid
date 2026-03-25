@@ -39,7 +39,7 @@ fun VerifyEmailScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var code by remember { mutableStateOf("") }
-    var timeLeft by remember { mutableStateOf(600) }   // 10 min
+    var timeLeft by remember { mutableStateOf(240) }   // 4 min (test)
     var resendCooldown by remember { mutableStateOf(0) }
     var showExpiredDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()

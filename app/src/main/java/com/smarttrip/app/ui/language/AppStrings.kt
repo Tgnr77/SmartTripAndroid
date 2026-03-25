@@ -243,7 +243,7 @@ data class AppStrings(
                 btnResendCode = "Renvoyer le code",
                 verifyTimerLabel = "Expire dans",
                 verifyExpiredTitle = "Délai expiré",
-                verifyExpiredText = "Le délai de 10 minutes est écoulé. Votre compte a été supprimé. Veuillez vous réinscrire.",
+                verifyExpiredText = "Le délai de 4 minutes est écoulé. Votre compte a été supprimé. Veuillez vous réinscrire.",
                 verifyExpiredBtn = "Se réinscrire",
                 // ForgotPassword
                 forgotPasswordTitle = "Mot de passe oublié",
@@ -404,7 +404,7 @@ data class AppStrings(
                 btnResendCode = "Resend code",
                 verifyTimerLabel = "Expires in",
                 verifyExpiredTitle = "Time expired",
-                verifyExpiredText = "The 10-minute window has expired. Your account has been deleted. Please register again.",
+                verifyExpiredText = "The 4-minute window has expired. Your account has been deleted. Please register again.",
                 verifyExpiredBtn = "Register again",
                 // ForgotPassword
                 forgotPasswordTitle = "Forgot Password",
@@ -565,7 +565,7 @@ data class AppStrings(
                 btnResendCode = "Reenviar código",
                 verifyTimerLabel = "Expira en",
                 verifyExpiredTitle = "Tiempo agotado",
-                verifyExpiredText = "El tiempo de 10 minutos ha expirado. Tu cuenta ha sido eliminada. Por favor regístrate de nuevo.",
+                verifyExpiredText = "El tiempo de 4 minutos ha expirado. Tu cuenta ha sido eliminada. Por favor regístrate de nuevo.",
                 verifyExpiredBtn = "Registrarse de nuevo",
                 // ForgotPassword
                 forgotPasswordTitle = "Olvidé mi contraseña",
@@ -725,7 +725,7 @@ data class AppStrings(
                 btnVerify = "验证",
                 btnResendCode = "重新发送验证码",                verifyTimerLabel = "剩余时间",
                 verifyExpiredTitle = "验证超时",
-                verifyExpiredText = "10分钟验证期已过期，您的账户已被删除，请重新注册。",
+                verifyExpiredText = "4分钟验证期已过期，您的账户已被删除，请重新注册。",
                 verifyExpiredBtn = "重新注册",                // ForgotPassword
                 forgotPasswordTitle = "忘记密码",
                 forgotPasswordSubtitle = "输入您的邮箱以接收重置链接。",
@@ -885,7 +885,7 @@ data class AppStrings(
                 btnResendCode = "コードを再送する",
                 verifyTimerLabel = "残り時間",
                 verifyExpiredTitle = "期限切れ",
-                verifyExpiredText = "10分間の認証期限が過ぎました。アカウントは削除されました。再度登録してください。",
+                verifyExpiredText = "4分間の認証期限が過ぎました。アカウントは削除されました。再度登録してください。",
                 verifyExpiredBtn = "再登録する",
                 // ForgotPassword
                 forgotPasswordTitle = "パスワードをお忘れの方",
