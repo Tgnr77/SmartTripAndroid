@@ -77,6 +77,10 @@ data class AppStrings(
     val verifyCodeLabel: String,
     val btnVerify: String,
     val btnResendCode: String,
+    val verifyTimerLabel: String,
+    val verifyExpiredTitle: String,
+    val verifyExpiredText: String,
+    val verifyExpiredBtn: String,
     // ── ForgotPassword screen ────────────────────────────────────────────────
     val forgotPasswordTitle: String,
     val forgotPasswordSubtitle: String,
@@ -237,6 +241,10 @@ data class AppStrings(
                 verifyCodeLabel = "Code de vérification",
                 btnVerify = "Vérifier",
                 btnResendCode = "Renvoyer le code",
+                verifyTimerLabel = "Expire dans",
+                verifyExpiredTitle = "Délai expiré",
+                verifyExpiredText = "Le délai de 10 minutes est écoulé. Votre compte a été supprimé. Veuillez vous réinscrire.",
+                verifyExpiredBtn = "Se réinscrire",
                 // ForgotPassword
                 forgotPasswordTitle = "Mot de passe oublié",
                 forgotPasswordSubtitle = "Entrez votre email pour recevoir un lien de réinitialisation.",
@@ -394,6 +402,10 @@ data class AppStrings(
                 verifyCodeLabel = "Verification code",
                 btnVerify = "Verify",
                 btnResendCode = "Resend code",
+                verifyTimerLabel = "Expires in",
+                verifyExpiredTitle = "Time expired",
+                verifyExpiredText = "The 10-minute window has expired. Your account has been deleted. Please register again.",
+                verifyExpiredBtn = "Register again",
                 // ForgotPassword
                 forgotPasswordTitle = "Forgot Password",
                 forgotPasswordSubtitle = "Enter your email to receive a password reset link.",
@@ -551,6 +563,10 @@ data class AppStrings(
                 verifyCodeLabel = "Código de verificación",
                 btnVerify = "Verificar",
                 btnResendCode = "Reenviar código",
+                verifyTimerLabel = "Expira en",
+                verifyExpiredTitle = "Tiempo agotado",
+                verifyExpiredText = "El tiempo de 10 minutos ha expirado. Tu cuenta ha sido eliminada. Por favor regístrate de nuevo.",
+                verifyExpiredBtn = "Registrarse de nuevo",
                 // ForgotPassword
                 forgotPasswordTitle = "Olvidé mi contraseña",
                 forgotPasswordSubtitle = "Introduce tu email para recibir un enlace de restablecimiento.",
@@ -707,8 +723,10 @@ data class AppStrings(
                 verifyEmailSubtitle = "已向 %s 发送了6位验证码",
                 verifyCodeLabel = "验证码",
                 btnVerify = "验证",
-                btnResendCode = "重新发送验证码",
-                // ForgotPassword
+                btnResendCode = "重新发送验证码",                verifyTimerLabel = "剩余时间",
+                verifyExpiredTitle = "验证超时",
+                verifyExpiredText = "10分钟验证期已过期，您的账户已被删除，请重新注册。",
+                verifyExpiredBtn = "重新注册",                // ForgotPassword
                 forgotPasswordTitle = "忘记密码",
                 forgotPasswordSubtitle = "输入您的邮箱以接收重置链接。",
                 forgotPasswordSuccess = "邮件已发送！请查看您的邮箱。",
@@ -865,6 +883,10 @@ data class AppStrings(
                 verifyCodeLabel = "確認コード",
                 btnVerify = "確認する",
                 btnResendCode = "コードを再送する",
+                verifyTimerLabel = "残り時間",
+                verifyExpiredTitle = "期限切れ",
+                verifyExpiredText = "10分間の認証期限が過ぎました。アカウントは削除されました。再度登録してください。",
+                verifyExpiredBtn = "再登録する",
                 // ForgotPassword
                 forgotPasswordTitle = "パスワードをお忘れの方",
                 forgotPasswordSubtitle = "メールアドレスを入力してリセットリンクを受け取ってください。",

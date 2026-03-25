@@ -115,6 +115,16 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // ─── Suppression compte (timer expiré) ───────────────────────────────
+    fun deleteAccount(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            authRepository.deleteAccount()
+            _currentUser.value = null
+            _uiState.value = AuthUiState.Unauthenticated
+            onDeleted()
+        }
+    }
+
     // ─── Renvoi code vérif ────────────────────────────────────────────────
     fun resendVerification(email: String) {
         viewModelScope.launch {

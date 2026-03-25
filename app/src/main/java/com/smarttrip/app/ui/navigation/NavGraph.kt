@@ -194,6 +194,11 @@ fun NavGraph(
                             popUpTo(Routes.LANDING)
                         }
                     },
+                    onExpired = {
+                        navController.navigate(Routes.REGISTER) {
+                            popUpTo(Routes.LANDING)
+                        }
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }

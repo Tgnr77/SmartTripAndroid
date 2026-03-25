@@ -27,23 +27,68 @@ import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerifyEmailScreen(
     email: String,
     onVerified: () -> Unit,
+    onExpired: () -> Unit,
     onBack: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var code by remember { mutableStateOf("") }
-    var resendEnabled by remember { mutableStateOf(true) }
+    var timeLeft by remember { mutableStateOf(600) }   // 10 min
+    var resendCooldown by remember { mutableStateOf(0) }
+    var showExpiredDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
+    // Navigation on success
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.EmailVerified) onVerified()
+    }
+
+    // 10-minute countdown
+    LaunchedEffect(Unit) {
+        while (timeLeft > 0) {
+            delay(1000L)
+            timeLeft--
+        }
+        // Timer expired: delete account then show dialog
+        viewModel.deleteAccount {}
+        showExpiredDialog = true
+    }
+
+    // 60s resend cooldown
+    LaunchedEffect(resendCooldown) {
+        if (resendCooldown > 0) {
+            delay(1000L)
+            resendCooldown--
+        }
+    }
+
+    val minutes = timeLeft / 60
+    val seconds = timeLeft % 60
+    val timerText = "%02d:%02d".format(minutes, seconds)
+    val isTimerCritical = timeLeft <= 60
+
+    // Expiry dialog
+    if (showExpiredDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            icon = { Text("⌛", fontSize = 32.sp) },
+            title = { Text(strings.verifyExpiredTitle, fontWeight = FontWeight.Bold) },
+            text = { Text(strings.verifyExpiredText, textAlign = TextAlign.Center) },
+            confirmButton = {
+                Button(
+                    onClick = onExpired,
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue600)
+                ) { Text(strings.verifyExpiredBtn, fontWeight = FontWeight.SemiBold) }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -82,7 +127,43 @@ fun VerifyEmailScreen(
                 color = Slate500,
                 textAlign = TextAlign.Center
             )
-            Spacer(Modifier.height(32.dp))
+
+            Spacer(Modifier.height(16.dp))
+
+            // Timer display
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (isTimerCritical) MaterialTheme.colorScheme.errorContainer
+                        else Blue600.copy(alpha = 0.08f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Default.Timer,
+                        contentDescription = null,
+                        tint = if (isTimerCritical) MaterialTheme.colorScheme.error else Blue600,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "${strings.verifyTimerLabel} ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isTimerCritical) MaterialTheme.colorScheme.error else Blue600
+                    )
+                    Text(
+                        timerText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isTimerCritical) MaterialTheme.colorScheme.error else Blue600
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             if (uiState is AuthUiState.Error) {
                 Surface(
@@ -126,10 +207,14 @@ fun VerifyEmailScreen(
             }
             Spacer(Modifier.height(16.dp))
             TextButton(
-                onClick = { viewModel.resendVerification(email); resendEnabled = false },
-                enabled = resendEnabled
+                onClick = { viewModel.resendVerification(email); resendCooldown = 60 },
+                enabled = resendCooldown == 0
             ) {
-                Text(strings.btnResendCode, color = if (resendEnabled) Blue600 else Slate500)
+                val resendText = if (resendCooldown > 0)
+                    "${strings.verifyTimerLabel} ${resendCooldown}s"
+                else
+                    strings.btnResendCode
+                Text(resendText, color = if (resendCooldown == 0) Blue600 else Slate500)
             }
         }
     }
