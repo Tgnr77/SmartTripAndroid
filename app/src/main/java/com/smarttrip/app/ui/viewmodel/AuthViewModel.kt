@@ -158,6 +158,15 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // ─── Auto-suppression (compte non vérifié — countdown expiré) ─────────
+    fun deleteSelf() {
+        viewModelScope.launch {
+            authRepository.deleteSelf()
+            _currentUser.value = null
+            _uiState.value = AuthUiState.Unauthenticated
+        }
+    }
+
     fun resetState() {
         _uiState.value = AuthUiState.Idle
     }

@@ -78,18 +78,9 @@ class InspirationViewModel @Inject constructor(
             )
             when (val result = flightRepository.getInspiration(request)) {
                 is ApiResult.Success -> {
-                    val weatherKey = weather.value
-                    val filtered = if (weatherKey.isEmpty()) result.data else result.data.filter { dest ->
-                        val desc = (dest.weather?.description ?: dest.weather?.weatherType ?: "").lowercase()
-                        when (weatherKey) {
-                            "sunny"  -> listOf("dégagé", "ensoleillé", "clear", "sunny", "beau", "soleil").any { desc.contains(it) }
-                            "cloudy" -> listOf("nuageux", "couvert", "cloudy", "overcast", "brumeux").any { desc.contains(it) }
-                            "rainy"  -> listOf("pluie", "averse", "rain", "shower", "bruine", "drizzle").any { desc.contains(it) }
-                            "snowy"  -> listOf("neige", "snow", "blizzard").any { desc.contains(it) }
-                            "stormy" -> listOf("orage", "storm", "thunder", "foudre").any { desc.contains(it) }
-                            else     -> true
-                        }
-                    }
+                    // Le backend gère maintenant tous les filtres (météo, température, humidité, vent, budget)
+                    // On conserve uniquement un filtrage de sécurité côté client sur les destinations sans code IATA
+                    val filtered = result.data.filter { !it.code.isNullOrBlank() }
                     if (filtered.isEmpty()) {
                         _uiState.value = InspirationUiState.Error("Aucune destination trouvée pour ces critères")
                     } else {

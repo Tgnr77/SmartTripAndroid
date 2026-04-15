@@ -27,6 +27,7 @@ import com.smarttrip.app.ui.viewmodel.AuthUiState
 import com.smarttrip.app.ui.viewmodel.AuthViewModel
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,13 +38,45 @@ fun VerifyEmailScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var code by remember { mutableStateOf("") }
-    var resendEnabled by remember { mutableStateOf(true) }
     val uiState by viewModel.uiState.collectAsState()
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
+    // ─── Countdown 5 minutes ──────────────────────────────────────────────
+    val totalSeconds = 5 * 60
+    var secondsLeft by remember { mutableIntStateOf(totalSeconds) }
+    var expired by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        while (secondsLeft > 0) {
+            delay(1_000)
+            secondsLeft--
+        }
+        // Compte expiré → supprimer l'utilisateur et revenir
+        expired = true
+        viewModel.deleteSelf()
+    }
+
+    // ─── Resend cooldown 60 s ─────────────────────────────────────────────
+    var resendCooldown by remember { mutableIntStateOf(0) }
+    LaunchedEffect(resendCooldown) {
+        if (resendCooldown > 0) {
+            delay(1_000)
+            resendCooldown--
+        }
+    }
+
+    // Format mm:ss
+    val minutes = secondsLeft / 60
+    val seconds = secondsLeft % 60
+    val countdownFormatted = "%d:%02d".format(minutes, seconds)
+
+    // Couleur du countdown (rouge dans les 60 dernières secondes)
+    val countdownColor = if (secondsLeft <= 60) Color(0xFFEF4444) else Color(0xFFF59E0B)
+
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.EmailVerified) onVerified()
+        if (uiState is AuthUiState.Unauthenticated && expired) onBack()
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -82,7 +115,31 @@ fun VerifyEmailScreen(
                 color = Slate500,
                 textAlign = TextAlign.Center
             )
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(20.dp))
+
+            // ── Countdown banner ─────────────────────────────────────────
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = countdownColor.copy(alpha = 0.10f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text("⏱", fontSize = 18.sp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        strings.countdownLabel.format(countdownFormatted),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = countdownColor,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            Spacer(Modifier.height(20.dp))
 
             if (uiState is AuthUiState.Error) {
                 Surface(
@@ -115,7 +172,7 @@ fun VerifyEmailScreen(
                 onClick = { viewModel.verifyEmail(email, code) },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
-                enabled = code.length == 6 && uiState !is AuthUiState.Loading,
+                enabled = code.length == 6 && uiState !is AuthUiState.Loading && !expired,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue600)
             ) {
                 if (uiState is AuthUiState.Loading) {
@@ -126,10 +183,22 @@ fun VerifyEmailScreen(
             }
             Spacer(Modifier.height(16.dp))
             TextButton(
-                onClick = { viewModel.resendVerification(email); resendEnabled = false },
-                enabled = resendEnabled
+                onClick = {
+                    if (resendCooldown == 0) {
+                        viewModel.resendVerification(email)
+                        resendCooldown = 60
+                        secondsLeft = totalSeconds  // reset le countdown principal
+                    }
+                },
+                enabled = resendCooldown == 0 && !expired
             ) {
-                Text(strings.btnResendCode, color = if (resendEnabled) Blue600 else Slate500)
+                Text(
+                    if (resendCooldown > 0)
+                        strings.resendCooldown.format("%d:%02d".format(resendCooldown / 60, resendCooldown % 60))
+                    else
+                        strings.btnResendCode,
+                    color = if (resendCooldown == 0 && !expired) Blue600 else Slate500
+                )
             }
         }
     }

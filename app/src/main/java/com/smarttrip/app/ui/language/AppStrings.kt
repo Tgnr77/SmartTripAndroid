@@ -77,6 +77,10 @@ data class AppStrings(
     val verifyCodeLabel: String,
     val btnVerify: String,
     val btnResendCode: String,
+    val countdownLabel: String,          // "⏱ Compte supprimé dans %s"
+    val resendCooldown: String,          // "Renvoyer dans %s"
+    val accountExpiredTitle: String,     // "Temps écoulé"
+    val accountExpiredMsg: String,       // "Votre compte a été supprimé"
     // ── ForgotPassword screen ────────────────────────────────────────────────
     val forgotPasswordTitle: String,
     val forgotPasswordSubtitle: String,
@@ -237,6 +241,10 @@ data class AppStrings(
                 verifyCodeLabel = "Code de vérification",
                 btnVerify = "Vérifier",
                 btnResendCode = "Renvoyer le code",
+                countdownLabel = "⏱ Compte supprimé dans %s",
+                resendCooldown = "Renvoyer dans %s",
+                accountExpiredTitle = "Temps écoulé",
+                accountExpiredMsg = "Votre compte a été supprimé faute de vérification.",
                 // ForgotPassword
                 forgotPasswordTitle = "Mot de passe oublié",
                 forgotPasswordSubtitle = "Entrez votre email pour recevoir un lien de réinitialisation.",
@@ -394,6 +402,10 @@ data class AppStrings(
                 verifyCodeLabel = "Verification code",
                 btnVerify = "Verify",
                 btnResendCode = "Resend code",
+                countdownLabel = "⏱ Account deleted in %s",
+                resendCooldown = "Resend in %s",
+                accountExpiredTitle = "Time's up",
+                accountExpiredMsg = "Your account was deleted due to no verification.",
                 // ForgotPassword
                 forgotPasswordTitle = "Forgot Password",
                 forgotPasswordSubtitle = "Enter your email to receive a password reset link.",
@@ -551,6 +563,10 @@ data class AppStrings(
                 verifyCodeLabel = "Código de verificación",
                 btnVerify = "Verificar",
                 btnResendCode = "Reenviar código",
+                countdownLabel = "⏱ Cuenta eliminada en %s",
+                resendCooldown = "Reenviar en %s",
+                accountExpiredTitle = "Tiempo agotado",
+                accountExpiredMsg = "Tu cuenta fue eliminada por falta de verificación.",
                 // ForgotPassword
                 forgotPasswordTitle = "Olvidé mi contraseña",
                 forgotPasswordSubtitle = "Introduce tu email para recibir un enlace de restablecimiento.",

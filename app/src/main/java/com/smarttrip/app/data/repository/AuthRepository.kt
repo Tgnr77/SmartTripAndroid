@@ -153,4 +153,16 @@ class AuthRepository @Inject constructor(
     suspend fun logout() {
         tokenDataStore.clearToken()
     }
+
+    suspend fun deleteSelf(): AuthResult<String> {
+        return try {
+            val response = api.deleteMe()
+            tokenDataStore.clearToken()
+            if (response.isSuccessful) AuthResult.Success("Compte supprimé")
+            else AuthResult.Error("Erreur lors de la suppression")
+        } catch (e: Exception) {
+            tokenDataStore.clearToken()
+            AuthResult.Error("Impossible de se connecter au serveur")
+        }
+    }
 }

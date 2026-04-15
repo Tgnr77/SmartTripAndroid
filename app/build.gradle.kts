@@ -20,9 +20,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // URL du backend — 10.0.2.2 = localhost depuis l'émulateur Android
-        // Pour un vrai téléphone, remplacer par l'IP de ton serveur
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/\"")
+        // URL du backend
+        // • Émulateur Android  → 10.0.2.2 (= localhost du PC)
+        // • Vrai appareil WiFi → IP locale de ton PC (ipconfig → IPv4)
+        //   Ex. école (WiFi ESME) : 10.4.249.101
+        //   Mets à jour cette valeur si l'IP change
+        buildConfigField("String", "BASE_URL", "\"http://10.4.249.101:3000/\"")
     }
 
     buildTypes {
