@@ -20,12 +20,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // URL du backend
-        // • Émulateur Android  → 10.0.2.2 (= localhost du PC)
-        // • Vrai appareil WiFi → IP locale de ton PC (ipconfig → IPv4)
-        //   Ex. école (WiFi ESME) : 10.4.249.101
-        //   Mets à jour cette valeur si l'IP change
-        buildConfigField("String", "BASE_URL", "\"http://10.4.249.101:3000/\"")
+        // URL du backend Railway (fonctionne depuis n'importe quel réseau)
+        buildConfigField("String", "BASE_URL", "\"https://backend-production-891ed.up.railway.app/\"")
     }
 
     buildTypes {
@@ -35,7 +31,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://ton-serveur.com/\"")
         }
     }
 
