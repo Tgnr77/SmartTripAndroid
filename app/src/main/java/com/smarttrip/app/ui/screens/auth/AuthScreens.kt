@@ -34,49 +34,61 @@ import kotlinx.coroutines.delay
 fun VerifyEmailScreen(
     email: String,
     onVerified: () -> Unit,
+    onExpired: () -> Unit,
     onBack: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var code by remember { mutableStateOf("") }
+    var timeLeft by remember { mutableStateOf(300) }   // 5 min
+    var resendCooldown by remember { mutableStateOf(0) }
+    var showExpiredDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
-    // ─── Countdown 5 minutes ──────────────────────────────────────────────
-    val totalSeconds = 5 * 60
-    var secondsLeft by remember { mutableIntStateOf(totalSeconds) }
-    var expired by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        while (secondsLeft > 0) {
-            delay(1_000)
-            secondsLeft--
-        }
-        // Compte expiré → supprimer l'utilisateur et revenir
-        expired = true
-        viewModel.deleteSelf()
+    // Navigation on success
+    LaunchedEffect(uiState) {
+        if (uiState is AuthUiState.EmailVerified) onVerified()
     }
 
-    // ─── Resend cooldown 60 s ─────────────────────────────────────────────
-    var resendCooldown by remember { mutableIntStateOf(0) }
+    // 10-minute countdown
+    LaunchedEffect(Unit) {
+        while (timeLeft > 0) {
+            delay(1000L)
+            timeLeft--
+        }
+        // Timer expired: delete account then show dialog
+        viewModel.deleteAccount {}
+        showExpiredDialog = true
+    }
+
+    // 60s resend cooldown
     LaunchedEffect(resendCooldown) {
         if (resendCooldown > 0) {
-            delay(1_000)
+            delay(1000L)
             resendCooldown--
         }
     }
 
-    // Format mm:ss
-    val minutes = secondsLeft / 60
-    val seconds = secondsLeft % 60
-    val countdownFormatted = "%d:%02d".format(minutes, seconds)
+    val minutes = timeLeft / 60
+    val seconds = timeLeft % 60
+    val timerText = "%02d:%02d".format(minutes, seconds)
+    val isTimerCritical = timeLeft <= 60
 
-    // Couleur du countdown (rouge dans les 60 dernières secondes)
-    val countdownColor = if (secondsLeft <= 60) Color(0xFFEF4444) else Color(0xFFF59E0B)
-
-    LaunchedEffect(uiState) {
-        if (uiState is AuthUiState.EmailVerified) onVerified()
-        if (uiState is AuthUiState.Unauthenticated && expired) onBack()
+    // Expiry dialog
+    if (showExpiredDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            icon = { Text("⌛", fontSize = 32.sp) },
+            title = { Text(strings.verifyExpiredTitle, fontWeight = FontWeight.Bold) },
+            text = { Text(strings.verifyExpiredText, textAlign = TextAlign.Center) },
+            confirmButton = {
+                Button(
+                    onClick = onExpired,
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue600)
+                ) { Text(strings.verifyExpiredBtn, fontWeight = FontWeight.SemiBold) }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -115,31 +127,43 @@ fun VerifyEmailScreen(
                 color = Slate500,
                 textAlign = TextAlign.Center
             )
-            Spacer(Modifier.height(20.dp))
 
-            // ── Countdown banner ─────────────────────────────────────────
+            Spacer(Modifier.height(16.dp))
+
+            // Timer display
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = countdownColor.copy(alpha = 0.10f),
+                color = if (isTimerCritical) MaterialTheme.colorScheme.errorContainer
+                        else Blue600.copy(alpha = 0.08f),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("⏱", fontSize = 18.sp)
+                    Icon(
+                        Icons.Default.Timer,
+                        contentDescription = null,
+                        tint = if (isTimerCritical) MaterialTheme.colorScheme.error else Blue600,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        strings.countdownLabel.format(countdownFormatted),
-                        style = MaterialTheme.typography.labelLarge,
+                        "${strings.verifyTimerLabel} ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isTimerCritical) MaterialTheme.colorScheme.error else Blue600
+                    )
+                    Text(
+                        timerText,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = countdownColor,
-                        textAlign = TextAlign.Center
+                        color = if (isTimerCritical) MaterialTheme.colorScheme.error else Blue600
                     )
                 }
             }
-            Spacer(Modifier.height(20.dp))
+
+            Spacer(Modifier.height(24.dp))
 
             if (uiState is AuthUiState.Error) {
                 Surface(
@@ -172,7 +196,7 @@ fun VerifyEmailScreen(
                 onClick = { viewModel.verifyEmail(email, code) },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
-                enabled = code.length == 6 && uiState !is AuthUiState.Loading && !expired,
+                enabled = code.length == 6 && uiState !is AuthUiState.Loading,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue600)
             ) {
                 if (uiState is AuthUiState.Loading) {
@@ -183,22 +207,14 @@ fun VerifyEmailScreen(
             }
             Spacer(Modifier.height(16.dp))
             TextButton(
-                onClick = {
-                    if (resendCooldown == 0) {
-                        viewModel.resendVerification(email)
-                        resendCooldown = 60
-                        secondsLeft = totalSeconds  // reset le countdown principal
-                    }
-                },
-                enabled = resendCooldown == 0 && !expired
+                onClick = { viewModel.resendVerification(email); resendCooldown = 60 },
+                enabled = resendCooldown == 0
             ) {
-                Text(
-                    if (resendCooldown > 0)
-                        strings.resendCooldown.format("%d:%02d".format(resendCooldown / 60, resendCooldown % 60))
-                    else
-                        strings.btnResendCode,
-                    color = if (resendCooldown == 0 && !expired) Blue600 else Slate500
-                )
+                val resendText = if (resendCooldown > 0)
+                    "${strings.verifyTimerLabel} ${resendCooldown}s"
+                else
+                    strings.btnResendCode
+                Text(resendText, color = if (resendCooldown == 0) Blue600 else Slate500)
             }
         }
     }

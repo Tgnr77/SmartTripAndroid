@@ -87,6 +87,16 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun deleteAccount(): AuthResult<String> {
+        return try {
+            api.deleteAccount()
+            tokenDataStore.clearToken()
+            AuthResult.Success("Compte supprimé")
+        } catch (e: Exception) {
+            AuthResult.Error("Impossible de supprimer le compte")
+        }
+    }
+
     suspend fun resendVerification(email: String): AuthResult<String> {
         return try {
             val response = api.resendVerification(mapOf("email" to email))

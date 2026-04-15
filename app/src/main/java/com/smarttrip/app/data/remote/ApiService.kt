@@ -29,8 +29,8 @@ interface ApiService {
     @GET("api/auth/profile")
     suspend fun getMe(): Response<ProfileResponse>
 
-    @DELETE("api/users/me")
-    suspend fun deleteMe(): Response<GenericResponse>
+    @DELETE("api/users/account")
+    suspend fun deleteAccount(): Response<GenericResponse>
 
     // ─── VOLS ──────────────────────────────────────────────────────────────
 
