@@ -90,7 +90,8 @@ data class AddFavoriteRequest(
     val stops: Int = 0,
     val cabinClass: String = "economy",
     val priceAmount: Double,
-    val priceCurrency: String = "EUR"
+    val priceCurrency: String = "EUR",
+    val bookingLink: String? = null
 )
 
 // Backend retourne { message, favorite: { ...FavoriteDto } }

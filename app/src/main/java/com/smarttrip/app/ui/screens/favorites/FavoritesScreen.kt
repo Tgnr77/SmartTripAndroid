@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,12 +40,7 @@ fun FavoritesScreen(
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
-    // Chargement initial (authState peut déjà être Authenticated au premier rendu)
-    LaunchedEffect(Unit) {
-        if (authViewModel.uiState.value is AuthUiState.Authenticated) {
-            viewModel.loadFavorites()
-        }
-    }
+    // Un seul LaunchedEffect sur authState : couvre le premier rendu ET les changements d'état.
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Authenticated -> viewModel.loadFavorites()
@@ -93,6 +89,7 @@ fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
     var showConfirm by remember { mutableStateOf(false) }
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
+    val uriHandler = LocalUriHandler.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -171,6 +168,19 @@ fun FavoriteCard(favorite: FavoriteDto, onDelete: () -> Unit) {
                 }
                 IconButton(onClick = { showConfirm = true }, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Default.Delete, contentDescription = strings.btnDelete, tint = Rose500, modifier = Modifier.size(18.dp))
+                }
+            }
+            if (!favorite.bookingLink.isNullOrBlank()) {
+                Spacer(Modifier.height(10.dp))
+                Button(
+                    onClick = { uriHandler.openUri(favorite.bookingLink) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue600)
+                ) {
+                    Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(strings.btnBook, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

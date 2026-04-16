@@ -18,10 +18,11 @@ sealed class AuthUiState {
     data class Authenticated(val user: UserDto) : AuthUiState()
     object Unauthenticated : AuthUiState()
     data class Error(val message: String) : AuthUiState()
-    data class RequiresVerification(val email: String) : AuthUiState()
+    data class RequiresVerification(val email: String, val secondsRemaining: Int = 300) : AuthUiState()
     data class NeedsEmailInput(val email: String) : AuthUiState() // après register
     object EmailVerified : AuthUiState() // email vérifié, rediriger vers login
     object Guest : AuthUiState()         // navigation sans compte
+    object AccountDeleted : AuthUiState() // code expiré, compte supprimé, ré-inscription requise
 }
 
 @HiltViewModel
@@ -34,6 +35,11 @@ class AuthViewModel @Inject constructor(
 
     private val _currentUser = MutableStateFlow<UserDto?>(null)
     val currentUser: StateFlow<UserDto?> = _currentUser.asStateFlow()
+
+    // Temps restant (en secondes) transmis par le backend lors d'une connexion
+    // avec un compte non vérifié. Utilisé pour initialiser le countdown de VerifyEmailScreen.
+    private val _verificationSecondsLeft = MutableStateFlow(300)
+    val verificationSecondsLeft: StateFlow<Int> = _verificationSecondsLeft.asStateFlow()
 
     init {
         checkSession()
@@ -51,7 +57,13 @@ class AuthViewModel @Inject constructor(
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState.Unauthenticated
                 }
-                AuthResult.RequiresVerification -> {
+                is AuthResult.RequiresVerification -> {
+                    _uiState.value = AuthUiState.Unauthenticated
+                }
+                is AuthResult.AccountDeleted -> {
+                    _uiState.value = AuthUiState.Unauthenticated
+                }
+                is AuthResult.Verified -> {
                     _uiState.value = AuthUiState.Unauthenticated
                 }
             }
@@ -70,8 +82,15 @@ class AuthViewModel @Inject constructor(
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState.Error(result.message)
                 }
-                AuthResult.RequiresVerification -> {
-                    _uiState.value = AuthUiState.RequiresVerification(email)
+                is AuthResult.RequiresVerification -> {
+                    _verificationSecondsLeft.value = result.secondsRemaining
+                    _uiState.value = AuthUiState.RequiresVerification(email, result.secondsRemaining)
+                }
+                is AuthResult.AccountDeleted -> {
+                    _uiState.value = AuthUiState.AccountDeleted
+                }
+                is AuthResult.Verified -> {
+                    _uiState.value = AuthUiState.Unauthenticated
                 }
             }
         }
@@ -88,8 +107,14 @@ class AuthViewModel @Inject constructor(
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState.Error(result.message)
                 }
-                AuthResult.RequiresVerification -> {
+                is AuthResult.RequiresVerification -> {
                     _uiState.value = AuthUiState.RequiresVerification(email)
+                }
+                is AuthResult.AccountDeleted -> {
+                    _uiState.value = AuthUiState.Unauthenticated
+                }
+                is AuthResult.Verified -> {
+                    _uiState.value = AuthUiState.Unauthenticated
                 }
             }
         }
@@ -100,16 +125,14 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             when (authRepository.verifyEmail(email, code)) {
-                is AuthResult.Success -> {
-                    // Ne devrait pas arriver (backend ne retourne pas de user ici)
+                is AuthResult.Verified -> {
                     _uiState.value = AuthUiState.EmailVerified
                 }
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState.Error("Code invalide ou expiré")
                 }
-                AuthResult.RequiresVerification -> {
-                    // Backend a confirmé la vérification, rediriger vers login
-                    _uiState.value = AuthUiState.EmailVerified
+                else -> {
+                    _uiState.value = AuthUiState.Unauthenticated
                 }
             }
         }

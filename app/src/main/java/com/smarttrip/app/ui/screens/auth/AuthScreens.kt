@@ -1,5 +1,6 @@
 package com.smarttrip.app.ui.screens.auth
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,18 +34,23 @@ import kotlinx.coroutines.delay
 @Composable
 fun VerifyEmailScreen(
     email: String,
+    initialTimeLeft: Int = 300,
     onVerified: () -> Unit,
     onExpired: () -> Unit,
     onBack: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var code by remember { mutableStateOf("") }
-    var timeLeft by remember { mutableStateOf(300) }   // 5 min
+    var timeLeft by remember { mutableStateOf(initialTimeLeft) }
     var resendCooldown by remember { mutableStateOf(0) }
     var showExpiredDialog by remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
+
+    // Intercept system back button (timer recompositions every second interfere
+    // with predictive-back gesture — BackHandler bypasses that)
+    BackHandler { onBack() }
 
     // Navigation on success
     LaunchedEffect(uiState) {

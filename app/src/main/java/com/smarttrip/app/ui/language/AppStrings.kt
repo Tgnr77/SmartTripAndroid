@@ -111,6 +111,9 @@ data class AppStrings(
     val logoutTitle: String,
     val logoutText: String,
     val confirmLogout: String,
+    val profileGuestTitle: String,
+    val profileGuestSubtitle: String,
+    val profileGuestBtn: String,
     // ── Favorites screen ─────────────────────────────────────────────────────
     val favoritesTitle: String,
     val noFavorites: String,
@@ -285,6 +288,9 @@ data class AppStrings(
                 logoutTitle = "Se déconnecter ?",
                 logoutText = "Vous devrez vous reconnecter pour accéder à vos favoris et à votre historique.",
                 confirmLogout = "Déconnexion",
+                profileGuestTitle = "Connexion requise",
+                profileGuestSubtitle = "Connectez-vous ou créez un compte pour accéder à votre profil.",
+                profileGuestBtn = "Se connecter",
                 // Favorites
                 favoritesTitle = "Mes favoris",
                 noFavorites = "Aucun favori",
@@ -456,6 +462,9 @@ data class AppStrings(
                 logoutTitle = "Sign out?",
                 logoutText = "You will need to sign in again to access your favorites and history.",
                 confirmLogout = "Sign Out",
+                profileGuestTitle = "Login required",
+                profileGuestSubtitle = "Sign in or create an account to access your profile.",
+                profileGuestBtn = "Sign in",
                 // Favorites
                 favoritesTitle = "My Favorites",
                 noFavorites = "No favorites",
@@ -627,6 +636,9 @@ data class AppStrings(
                 logoutTitle = "¿Cerrar sesión?",
                 logoutText = "Tendrás que iniciar sesión de nuevo para acceder a tus favoritos e historial.",
                 confirmLogout = "Cerrar sesión",
+                profileGuestTitle = "Inicio de sesión requerido",
+                profileGuestSubtitle = "Inicia sesión o crea una cuenta para acceder a tu perfil.",
+                profileGuestBtn = "Iniciar sesión",
                 // Favorites
                 favoritesTitle = "Mis favoritos",
                 noFavorites = "Sin favoritos",
@@ -796,6 +808,9 @@ data class AppStrings(
                 logoutTitle = "退出登录？",
                 logoutText = "退出后需重新登录才能访问收藏和历史记录。",
                 confirmLogout = "退出",
+                profileGuestTitle = "需要登录",
+                profileGuestSubtitle = "登录或创建账户以访问您的个人资料。",
+                profileGuestBtn = "登录",
                 // Favorites
                 favoritesTitle = "我的收藏",
                 noFavorites = "暂无收藏",
@@ -967,6 +982,9 @@ data class AppStrings(
                 logoutTitle = "ログアウトしますか？",
                 logoutText = "お気に入りと履歴にアクセスするには再度ログインが必要です。",
                 confirmLogout = "ログアウト",
+                profileGuestTitle = "ログインが必要です",
+                profileGuestSubtitle = "プロフィールにアクセスするにはログインしてください。",
+                profileGuestBtn = "ログイン",
                 // Favorites
                 favoritesTitle = "お気に入り",
                 noFavorites = "お気に入りなし",

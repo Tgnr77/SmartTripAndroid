@@ -35,7 +35,7 @@ object Routes {
     const val HOME          = "home"
     const val LOGIN         = "login"
     const val REGISTER      = "register"
-    const val VERIFY_EMAIL  = "verify_email/{email}"
+    const val VERIFY_EMAIL  = "verify_email/{email}?secondsLeft={secondsLeft}"
     const val FORGOT_PASS   = "forgot_password"
     const val RESET_PASS    = "reset_password/{token}"
     const val SEARCH_RESULTS = "search_results"
@@ -44,7 +44,7 @@ object Routes {
     const val PROFILE       = "profile"
     const val INSPIRATION   = "inspiration"
 
-    fun verifyEmail(email: String) = "verify_email/$email"
+    fun verifyEmail(email: String, secondsLeft: Int = 300) = "verify_email/$email?secondsLeft=$secondsLeft"
     fun resetPassword(token: String) = "reset_password/$token"
 }
 
@@ -93,11 +93,13 @@ fun NavGraph(
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Unauthenticated -> {
-                if (currentRoute !in listOf(
-                        Routes.LANDING, Routes.LOGIN, Routes.REGISTER,
-                        Routes.FORGOT_PASS, "verify_email/{email}", "reset_password/{token}"
-                    )
-                ) {
+                val safeRoutes = listOf(Routes.LANDING, Routes.LOGIN, Routes.REGISTER, Routes.FORGOT_PASS)
+                val isOnSafeRoute = currentRoute != null && (
+                    currentRoute in safeRoutes ||
+                    currentRoute.startsWith("verify_email/") ||
+                    currentRoute.startsWith("reset_password/")
+                )
+                if (!isOnSafeRoute) {
                     navController.navigate(Routes.LANDING) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -168,8 +170,13 @@ fun NavGraph(
                     },
                     onNavigateToRegister = { navController.navigate(Routes.REGISTER) },
                     onNavigateToForgotPassword = { navController.navigate(Routes.FORGOT_PASS) },
-                    onRequiresVerification = { email ->
-                        navController.navigate(Routes.verifyEmail(email))
+                    onRequiresVerification = { email, seconds ->
+                        navController.navigate(Routes.verifyEmail(email, seconds))
+                    },
+                    onAccountDeleted = {
+                        navController.navigate(Routes.REGISTER) {
+                            popUpTo(Routes.LANDING)
+                        }
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -184,11 +191,16 @@ fun NavGraph(
             }
             composable(
                 route = Routes.VERIFY_EMAIL,
-                arguments = listOf(navArgument("email") { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument("email") { type = NavType.StringType },
+                    navArgument("secondsLeft") { type = NavType.IntType; defaultValue = 300 }
+                )
             ) { backStackEntry ->
                 val email = backStackEntry.arguments?.getString("email") ?: ""
+                val secondsLeft = backStackEntry.arguments?.getInt("secondsLeft") ?: 300
                 VerifyEmailScreen(
                     email = email,
+                    initialTimeLeft = secondsLeft,
                     onVerified = {
                         navController.navigate(Routes.LOGIN) {
                             popUpTo(Routes.LANDING)
@@ -199,7 +211,15 @@ fun NavGraph(
                             popUpTo(Routes.LANDING)
                         }
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = {
+                        // Clear token so the unverified account can't be used as a session.
+                        // The account stays in DB: if user logs in again with the same email,
+                        // the backend (403 + requiresVerification) redirects back here.
+                        authViewModel.logout()
+                        navController.navigate(Routes.LANDING) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             composable(Routes.FORGOT_PASS) {

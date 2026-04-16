@@ -258,11 +258,11 @@ fun InspirationScreen(
                     showOriginDropdown = showOriginDropdown,
                     uiState = uiState,
                     strings = strings,
-                    onWeatherChange = { viewModel.weather.value = it },
-                    onTemperatureChange = { viewModel.temperature.value = it },
-                    onHumidityChange = { viewModel.humidity.value = it },
-                    onWindChange = { viewModel.wind.value = it },
-                    onBudgetChange = { viewModel.budget.value = it },
+                    onWeatherChange = { viewModel.setWeather(it) },
+                    onTemperatureChange = { viewModel.setTemperature(it) },
+                    onHumidityChange = { viewModel.setHumidity(it) },
+                    onWindChange = { viewModel.setWind(it) },
+                    onBudgetChange = { viewModel.setBudget(it) },
                     onOriginChange = { v ->
                         origin = v; originCode = ""
                         originSuggestions = searchAirports(v)
@@ -359,29 +359,58 @@ fun InspirationScreen(
                         letterSpacing = 0.3.sp
                     )
                     Spacer(Modifier.weight(1f))
-                    // Bouton Mode Surprise
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                Brush.horizontalGradient(listOf(Color(0xFF7C3AED), Color(0xFFEC4899)))
-                            )
-                            .clickable {
-                                globeController.startSurpriseSpin()
-                                viewModel.surprise(originCode, departureDate)
-                            }
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    // Boutons Surprise : Tendances + Aléatoire
+                    Row(
+                        modifier = Modifier.padding(end = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("🎲", fontSize = 14.sp)
-                            Spacer(Modifier.width(5.dp))
-                            Text(
-                                strings.surpriseBtn,
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold
-                            )
+                        // 🔥 Surprise Tendances
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.horizontalGradient(listOf(Color(0xFFEA580C), Color(0xFFF59E0B)))
+                                )
+                                .clickable {
+                                    globeController.startSurpriseSpin()
+                                    viewModel.surpriseTrending()
+                                }
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🔥", fontSize = 13.sp)
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    "Tendances",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        // 🎲 Surprise Aléatoire
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.horizontalGradient(listOf(Color(0xFF7C3AED), Color(0xFFEC4899)))
+                                )
+                                .clickable {
+                                    globeController.startSurpriseSpin()
+                                    viewModel.surpriseRandom(originCode, departureDate)
+                                }
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🎲", fontSize = 13.sp)
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    strings.surpriseBtn,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

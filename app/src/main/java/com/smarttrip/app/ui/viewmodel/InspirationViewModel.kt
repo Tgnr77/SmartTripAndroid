@@ -2,6 +2,7 @@ package com.smarttrip.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.smarttrip.app.data.local.TokenDataStore
 import com.smarttrip.app.data.remote.models.InspirationDestinationDto
 import com.smarttrip.app.data.remote.models.InspirationRequest
 import com.smarttrip.app.data.repository.ApiResult
@@ -21,18 +22,36 @@ sealed class InspirationUiState {
 
 @HiltViewModel
 class InspirationViewModel @Inject constructor(
-    private val flightRepository: FlightRepository
+    private val flightRepository: FlightRepository,
+    private val tokenDataStore: TokenDataStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<InspirationUiState>(InspirationUiState.Idle)
     val uiState: StateFlow<InspirationUiState> = _uiState
 
-    val budget      = MutableStateFlow("")
-    val weather     = MutableStateFlow("")
-    val temperature = MutableStateFlow("")
-    val humidity    = MutableStateFlow("")
-    val wind        = MutableStateFlow("")
-    val activities  = MutableStateFlow(setOf<String>())
+    // ─── Filtre states (encapsulés — setters exposés pour la UI) ─────────
+    private val _budget      = MutableStateFlow("")
+    val budget: StateFlow<String> = _budget
+    fun setBudget(v: String) { _budget.value = v }
+
+    private val _weather     = MutableStateFlow("")
+    val weather: StateFlow<String> = _weather
+    fun setWeather(v: String) { _weather.value = v }
+
+    private val _temperature = MutableStateFlow("")
+    val temperature: StateFlow<String> = _temperature
+    fun setTemperature(v: String) { _temperature.value = v }
+
+    private val _humidity    = MutableStateFlow("")
+    val humidity: StateFlow<String> = _humidity
+    fun setHumidity(v: String) { _humidity.value = v }
+
+    private val _wind        = MutableStateFlow("")
+    val wind: StateFlow<String> = _wind
+    fun setWind(v: String) { _wind.value = v }
+
+    private val _activities  = MutableStateFlow(setOf<String>())
+    val activities: StateFlow<Set<String>> = _activities
 
     private val _favoriteCodes = MutableStateFlow<Set<String>>(emptySet())
     val favoriteCodes: StateFlow<Set<String>> = _favoriteCodes
@@ -42,14 +61,19 @@ class InspirationViewModel @Inject constructor(
 
     init { loadFavoritesAndHistory() }
 
+    /** Charge les favoris et l'historique UNIQUEMENT si un token est disponible (utilisateur connecté). */
     private fun loadFavoritesAndHistory() {
         viewModelScope.launch {
+            tokenDataStore.awaitReady()
+            if (tokenDataStore.cachedToken == null) return@launch // invité, pas d'appel API
             when (val r = flightRepository.getFavorites()) {
                 is ApiResult.Success -> _favoriteCodes.value = r.data.map { it.destinationCode }.toSet()
                 else -> Unit
             }
         }
         viewModelScope.launch {
+            tokenDataStore.awaitReady()
+            if (tokenDataStore.cachedToken == null) return@launch // invité, pas d'appel API
             when (val r = flightRepository.getSearchHistory()) {
                 is ApiResult.Success -> _recentCodes.value = r.data.map { it.destinationCode }.toSet()
                 else -> Unit
@@ -58,9 +82,9 @@ class InspirationViewModel @Inject constructor(
     }
 
     fun toggleActivity(activity: String) {
-        val current = activities.value.toMutableSet()
+        val current = _activities.value.toMutableSet()
         if (current.contains(activity)) current.remove(activity) else current.add(activity)
-        activities.value = current
+        _activities.value = current
     }
 
     fun getInspiration(origin: String, departureDate: String) {
@@ -69,12 +93,12 @@ class InspirationViewModel @Inject constructor(
             val request = InspirationRequest(
                 origin = origin,
                 departureDate = departureDate,
-                weather = weather.value,
-                temperature = temperature.value,
-                humidity = humidity.value,
-                wind = wind.value,
-                budget = budget.value,
-                activities = activities.value.toList()
+                weather = _weather.value,
+                temperature = _temperature.value,
+                humidity = _humidity.value,
+                wind = _wind.value,
+                budget = _budget.value,
+                activities = _activities.value.toList()
             )
             when (val result = flightRepository.getInspiration(request)) {
                 is ApiResult.Success -> {
@@ -92,11 +116,26 @@ class InspirationViewModel @Inject constructor(
         }
     }
 
-    /** Mode Surprise : réinitialise tous les filtres et lance une recherche aléatoire */
-    fun surprise(origin: String = "", departureDate: String = "") {
+    /** Mode Surprise Tendances : destinations basées sur les recherches les plus fréquentes */
+    fun surpriseTrending() {
         viewModelScope.launch {
-            weather.value = ""; temperature.value = ""; humidity.value = ""
-            wind.value = ""; budget.value = ""
+            _uiState.value = InspirationUiState.Loading
+            when (val result = flightRepository.getSurpriseTrending()) {
+                is ApiResult.Success -> {
+                    _uiState.value = if (result.data.isEmpty())
+                        InspirationUiState.Error("Aucune destination tendance trouvée")
+                    else InspirationUiState.Success(result.data)
+                }
+                is ApiResult.Error -> _uiState.value = InspirationUiState.Error(result.message)
+            }
+        }
+    }
+
+    /** Mode Surprise Aléatoire : destination complètement aléatoire */
+    fun surpriseRandom(origin: String = "", departureDate: String = "") {
+        viewModelScope.launch {
+            _weather.value = ""; _temperature.value = ""; _humidity.value = ""
+            _wind.value = ""; _budget.value = ""
             _uiState.value = InspirationUiState.Loading
             val request = InspirationRequest(origin = origin, departureDate = departureDate)
             when (val result = flightRepository.getInspiration(request)) {

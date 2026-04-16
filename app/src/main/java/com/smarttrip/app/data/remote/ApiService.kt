@@ -46,6 +46,9 @@ interface ApiService {
     @POST("api/inspiration")
     suspend fun getInspiration(@Body request: InspirationRequest): Response<InspirationResponse>
 
+    @GET("api/inspiration/surprise-trending")
+    suspend fun getSurpriseTrending(): Response<InspirationResponse>
+
     // ─── FAVORIS ───────────────────────────────────────────────────────────
 
     @GET("api/favorites")

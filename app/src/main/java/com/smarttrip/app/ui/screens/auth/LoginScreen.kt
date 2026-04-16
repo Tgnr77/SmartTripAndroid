@@ -40,7 +40,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
-    onRequiresVerification: (String) -> Unit,
+    onRequiresVerification: (String, Int) -> Unit,
+    onAccountDeleted: () -> Unit,
     onBack: (() -> Unit)? = null,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -55,7 +56,8 @@ fun LoginScreen(
     LaunchedEffect(uiState) {
         when (val state = uiState) {
             is AuthUiState.Authenticated -> onLoginSuccess()
-            is AuthUiState.RequiresVerification -> onRequiresVerification(state.email)
+            is AuthUiState.RequiresVerification -> onRequiresVerification(state.email, state.secondsRemaining)
+            is AuthUiState.AccountDeleted -> onAccountDeleted()
             else -> Unit
         }
     }

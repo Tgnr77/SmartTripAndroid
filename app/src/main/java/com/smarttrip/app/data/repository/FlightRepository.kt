@@ -80,6 +80,19 @@ class FlightRepository @Inject constructor(
         }
     }
 
+    suspend fun getSurpriseTrending(): ApiResult<List<InspirationDestinationDto>> {
+        return try {
+            val response = api.getSurpriseTrending()
+            if (response.isSuccessful) {
+                ApiResult.Success(response.body()?.destinations ?: emptyList())
+            } else {
+                ApiResult.Error("Erreur tendances")
+            }
+        } catch (e: Exception) {
+            ApiResult.Error("Impossible de se connecter au serveur")
+        }
+    }
+
     // ─── FAVORIS ──────────────────────────────────────────────────────────
 
     suspend fun getFavorites(): ApiResult<List<FavoriteDto>> {

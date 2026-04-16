@@ -23,6 +23,9 @@ class HomeViewModel @Inject constructor(
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         loadTrendingDestinations()
     }
@@ -30,9 +33,13 @@ class HomeViewModel @Inject constructor(
     fun loadTrendingDestinations() {
         viewModelScope.launch {
             _loading.value = true
+            _error.value = null
             when (val result = flightRepository.getPopularDestinations()) {
                 is ApiResult.Success -> _trendingDestinations.value = result.data
-                is ApiResult.Error -> _trendingDestinations.value = emptyList()
+                is ApiResult.Error   -> {
+                    _trendingDestinations.value = emptyList()
+                    _error.value = result.message
+                }
             }
             _loading.value = false
         }

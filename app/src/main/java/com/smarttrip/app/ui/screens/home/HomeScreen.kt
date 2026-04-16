@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,10 +47,10 @@ fun HomeScreen(
     prefillDestName: String = "",
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    var origin by remember { mutableStateOf("") }
-    var originCode by remember { mutableStateOf("") }
-    var destination by remember { mutableStateOf(prefillDestName) }
-    var destinationCode by remember { mutableStateOf(prefillDestCode) }
+    var origin by rememberSaveable { mutableStateOf("") }
+    var originCode by rememberSaveable { mutableStateOf("") }
+    var destination by rememberSaveable { mutableStateOf(prefillDestName) }
+    var destinationCode by rememberSaveable { mutableStateOf(prefillDestCode) }
 
     // Apply prefill from inspiration navigation
     LaunchedEffect(prefillDestCode, prefillDestName) {
@@ -58,12 +59,12 @@ fun HomeScreen(
             destination = prefillDestName.ifBlank { prefillDestCode }
         }
     }
-    var departureDate by remember { mutableStateOf("") }
-    var returnDate by remember { mutableStateOf("") }
-    var passengers by remember { mutableStateOf(1) }
-    var cabinClass by remember { mutableStateOf("economy") }
-    var tripType by remember { mutableStateOf("roundtrip") }
-    var directOnly by remember { mutableStateOf(false) }
+    var departureDate by rememberSaveable { mutableStateOf("") }
+    var returnDate by rememberSaveable { mutableStateOf("") }
+    var passengers by rememberSaveable { mutableStateOf(1) }
+    var cabinClass by rememberSaveable { mutableStateOf("economy") }
+    var tripType by rememberSaveable { mutableStateOf("roundtrip") }
+    var directOnly by rememberSaveable { mutableStateOf(false) }
 
     var originSuggestions by remember { mutableStateOf(listOf<Airport>()) }
     var destinationSuggestions by remember { mutableStateOf(listOf<Airport>()) }
@@ -72,6 +73,7 @@ fun HomeScreen(
 
     val trendingDestinations by viewModel.trendingDestinations.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val trendingError by viewModel.error.collectAsState()
     val focusManager = LocalFocusManager.current
 
     val canSearch = originCode.isNotBlank() && destinationCode.isNotBlank() && departureDate.isNotBlank()
@@ -229,8 +231,7 @@ fun HomeScreen(
                     // Type de voyage
                     val tripTypes = listOf(
                         "roundtrip" to strings.tripRoundtrip,
-                        "oneway" to strings.tripOneWay,
-                        "multicity" to strings.tripMultiCity
+                        "oneway" to strings.tripOneWay
                     )
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         tripTypes.forEachIndexed { index, (type, label) ->
@@ -502,6 +503,11 @@ fun HomeScreen(
                 if (loading) {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         items(3) { ShimmerCard() }
+                    }
+                } else if (trendingError != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(trendingError!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { viewModel.loadTrendingDestinations() }) { Text(strings.btnRetry) }
                     }
                 } else if (trendingDestinations.isEmpty()) {
                     Text(

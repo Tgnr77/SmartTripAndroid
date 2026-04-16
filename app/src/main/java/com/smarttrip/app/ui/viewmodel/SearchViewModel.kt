@@ -60,14 +60,19 @@ class SearchViewModel @Inject constructor(
         _sortBy.value = sort
     }
 
+    private fun FlightDto.matchesFlight(other: FlightDto): Boolean {
+        if (this.id != null && other.id != null) return this.id == other.id
+        return this.outbound.departureAirport == other.outbound.departureAirport &&
+                this.outbound.departureTime == other.outbound.departureTime &&
+                this.price == other.price
+    }
+
     fun toggleFavorite(flight: FlightDto) {
         viewModelScope.launch {
             if (flight.isFavorite && flight.favoriteId != null) {
                 flightRepository.deleteFavorite(flight.favoriteId)
                 _allFlights.value = _allFlights.value.map {
-                    if (it.outbound.departureAirport == flight.outbound.departureAirport &&
-                        it.price == flight.price
-                    ) it.copy(isFavorite = false, favoriteId = null) else it
+                    if (it.matchesFlight(flight)) it.copy(isFavorite = false, favoriteId = null) else it
                 }
             } else {
                 val request = AddFavoriteRequest(
@@ -80,14 +85,13 @@ class SearchViewModel @Inject constructor(
                     durationMinutes = flight.outbound.duration,
                     stops = flight.outbound.stops,
                     airlineName = flight.outbound.airline,
-                    flightNumber = flight.outbound.flightNumber
+                    flightNumber = flight.outbound.flightNumber,
+                    bookingLink = flight.bookingLink
                 )
                 when (val r = flightRepository.addFavorite(request)) {
                     is ApiResult.Success -> {
                         _allFlights.value = _allFlights.value.map {
-                            if (it.outbound.departureAirport == flight.outbound.departureAirport &&
-                                it.price == flight.price
-                            ) it.copy(isFavorite = true, favoriteId = r.data) else it
+                            if (it.matchesFlight(flight)) it.copy(isFavorite = true, favoriteId = r.data) else it
                         }
                     }
                     is ApiResult.Error -> _error.value = r.message

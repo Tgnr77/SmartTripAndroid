@@ -41,7 +41,41 @@ fun ProfileScreen(
     val strings = AppStrings.forLanguage(language)
 
     LaunchedEffect(authState) {
-        if (authState is AuthUiState.Unauthenticated || authState is AuthUiState.Guest) onLoginRequired()
+        // Rediriger uniquement les non-authentifiés (pas les invités qui ont un écran dédié)
+        if (authState is AuthUiState.Unauthenticated) onLoginRequired()
+    }
+
+    // Afficher un écran dédié pour les invités au lieu de rediriger silencieusement
+    if (authState is AuthUiState.Guest) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Text("👤", fontSize = 64.sp)
+                Text(
+                    strings.profileGuestTitle,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    strings.profileGuestSubtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onLoginRequired,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(strings.profileGuestBtn, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+        return
     }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {

@@ -41,9 +41,7 @@ fun SearchHistoryScreen(
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
 
-    LaunchedEffect(Unit) {
-        if (authViewModel.uiState.value is AuthUiState.Authenticated) viewModel.loadHistory()
-    }
+    // Un seul LaunchedEffect sur authState : couvre le premier rendu ET les changements d'état.
     LaunchedEffect(authState) {
         when (authState) {
             is AuthUiState.Authenticated -> viewModel.loadHistory()
@@ -97,6 +95,8 @@ fun SearchHistoryScreen(
                                 if (entry.returnDate != null) append("&returnDate=${entry.returnDate}")
                                 append("&passengers=${entry.passengers}")
                                 append("&class=${entry.cabinClass}")
+                                append("&tripType=${if (entry.returnDate != null) "roundtrip" else "oneway"}")
+                                append("&nonStop=false")
                             }
                             onSearchAgain(params)
                         }

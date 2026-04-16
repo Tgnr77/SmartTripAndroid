@@ -9,7 +9,9 @@ import javax.inject.Singleton
 sealed class AuthResult<out T> {
     data class Success<T>(val data: T) : AuthResult<T>()
     data class Error(val message: String) : AuthResult<Nothing>()
-    object RequiresVerification : AuthResult<Nothing>()
+    data class RequiresVerification(val secondsRemaining: Int = 300) : AuthResult<Nothing>()
+    object AccountDeleted : AuthResult<Nothing>()
+    object Verified : AuthResult<Nothing>() // email vérifié avec succès
 }
 
 @Singleton
@@ -31,13 +33,18 @@ class AuthRepository @Inject constructor(
                 }
             } else if (response.code() == 403) {
                 // Backend retourne 403 quand l'email n'est pas vérifié
-                // Le error body contient { requiresVerification: true, email: ... }
                 val errorBodyStr = response.errorBody()?.string() ?: ""
                 if (errorBodyStr.contains("requiresVerification")) {
-                    AuthResult.RequiresVerification
+                    val seconds = try {
+                        org.json.JSONObject(errorBodyStr).optInt("secondsRemaining", 300)
+                    } catch (e: Exception) { 300 }
+                    AuthResult.RequiresVerification(seconds)
                 } else {
                     AuthResult.Error("Compte non autorisé")
                 }
+            } else if (response.code() == 410) {
+                // Code expiré : le compte a été supprimé côté backend
+                AuthResult.AccountDeleted
             } else {
                 AuthResult.Error("Email ou mot de passe incorrect")
             }
@@ -56,7 +63,8 @@ class AuthRepository @Inject constructor(
             val response = api.register(RegisterRequest(email, password, firstName, lastName))
             if (response.isSuccessful) {
                 val body = response.body()
-                body?.token?.let { tokenDataStore.saveToken(it) }
+                // Ne PAS sauvegarder le token ici : le compte n'est pas encore vérifié.
+                // Le token sera sauvegardé lors du login après vérification email.
                 AuthResult.Success(email)
             } else {
                 // Parse le corps d'erreur pour afficher le vrai message
@@ -75,10 +83,7 @@ class AuthRepository @Inject constructor(
         return try {
             val response = api.verifyEmail(VerifyEmailRequest(email, code))
             if (response.isSuccessful) {
-                // Backend retourne juste { message: 'Email vérifié' } — pas de token
-                // On signale la vérification réussie via RequiresVerification
-                // Le ViewModel redirigera vers la page de connexion
-                AuthResult.RequiresVerification
+                AuthResult.Verified
             } else {
                 AuthResult.Error("Code de vérification invalide")
             }
@@ -89,13 +94,18 @@ class AuthRepository @Inject constructor(
 
     suspend fun deleteAccount(): AuthResult<String> {
         return try {
-            api.deleteAccount()
+            val response = api.deleteAccount()
             tokenDataStore.clearToken()
-            AuthResult.Success("Compte supprimé")
+            if (response.isSuccessful) AuthResult.Success("Compte supprimé")
+            else AuthResult.Error("Erreur lors de la suppression")
         } catch (e: Exception) {
+            tokenDataStore.clearToken()
             AuthResult.Error("Impossible de supprimer le compte")
         }
     }
+
+    // Alias conservé pour compatibilité
+    suspend fun deleteSelf() = deleteAccount()
 
     suspend fun resendVerification(email: String): AuthResult<String> {
         return try {
@@ -141,6 +151,7 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun getMe(): AuthResult<UserDto> {
+        tokenDataStore.awaitReady() // ensure cached token is loaded before first request
         return try {
             val response = api.getMe()
             if (response.isSuccessful) {
@@ -164,15 +175,5 @@ class AuthRepository @Inject constructor(
         tokenDataStore.clearToken()
     }
 
-    suspend fun deleteSelf(): AuthResult<String> {
-        return try {
-            val response = api.deleteMe()
-            tokenDataStore.clearToken()
-            if (response.isSuccessful) AuthResult.Success("Compte supprimé")
-            else AuthResult.Error("Erreur lors de la suppression")
-        } catch (e: Exception) {
-            tokenDataStore.clearToken()
-            AuthResult.Error("Impossible de se connecter au serveur")
-        }
-    }
+    // deleteSelf() est un alias de deleteAccount() (conservé pour compatibilité avec AuthViewModel)
 }
