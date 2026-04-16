@@ -55,10 +55,27 @@ class InspirationViewModel @Inject constructor(
     val continent: StateFlow<String> = _continent
     fun setContinent(v: String) { _continent.value = v; applyLocalFilters() }
 
-    // ─── Destinations déjà visitées (exclu des résultats) ────────────────
+    // ─── Destinations déjà visitées ─────────────────────────────────────
     private val _visitedCodes = MutableStateFlow<Set<String>>(emptySet())
     val visitedCodes: StateFlow<Set<String>> = _visitedCodes
-    fun markVisited(code: String) { _visitedCodes.value = _visitedCodes.value + code; applyLocalFilters() }
+
+    private val _visitedDestinations = MutableStateFlow<List<InspirationDestinationDto>>(emptyList())
+    val visitedDestinations: StateFlow<List<InspirationDestinationDto>> = _visitedDestinations
+
+    fun markVisited(dest: InspirationDestinationDto) {
+        val code = dest.code ?: return
+        if (code !in _visitedCodes.value) {
+            _visitedCodes.value = _visitedCodes.value + code
+            _visitedDestinations.value = _visitedDestinations.value + dest
+            applyLocalFilters()
+        }
+    }
+
+    fun unmarkVisited(code: String) {
+        _visitedCodes.value = _visitedCodes.value - code
+        _visitedDestinations.value = _visitedDestinations.value.filter { it.code != code }
+        applyLocalFilters()
+    }
 
     // ─── Codes trending (pour badge sur les cartes) ───────────────────────
     private val _trendingCodes = MutableStateFlow<Set<String>>(emptySet())

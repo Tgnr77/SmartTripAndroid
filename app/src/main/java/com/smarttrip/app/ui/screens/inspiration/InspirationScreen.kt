@@ -147,9 +147,10 @@ fun InspirationScreen(
     val budget        by viewModel.budget.collectAsState()
     val continent     by viewModel.continent.collectAsState()
     val visitedCodes  by viewModel.visitedCodes.collectAsState()
-    val trendingCodes by viewModel.trendingCodes.collectAsState()
-    val favoriteCodes by viewModel.favoriteCodes.collectAsState()
-    val recentCodes   by viewModel.recentCodes.collectAsState()
+    val trendingCodes      by viewModel.trendingCodes.collectAsState()
+    val favoriteCodes      by viewModel.favoriteCodes.collectAsState()
+    val recentCodes        by viewModel.recentCodes.collectAsState()
+    val visitedDestinations by viewModel.visitedDestinations.collectAsState()
     val language      by LanguageManager.language.collectAsState()
     val strings       = AppStrings.forLanguage(language)
 
@@ -264,7 +265,9 @@ fun InspirationScreen(
                     onBook = { city, code ->
                         navigateToDestination(city, code)
                     },
-                    onMarkVisited = { code -> viewModel.markVisited(code) },
+                    onMarkVisited = { dest -> viewModel.markVisited(dest) },
+                    onUnmarkVisited = { code -> viewModel.unmarkVisited(code) },
+                    visitedDestinations = visitedDestinations,
                     onShare = { dest ->
                         val price = dest.minPrice?.let { " · ~${it.toInt()}€" } ?: ""
                         val temp  = dest.weather?.temperature?.let { " · ${it.toInt()}°" } ?: ""
@@ -779,13 +782,16 @@ private fun ResultsPanel(
     selectedCity: String?,
     trendingCodes: Set<String>,
     visitedCodes: Set<String>,
+    visitedDestinations: List<InspirationDestinationDto>,
     strings: AppStrings,
     onSelectCity: (String) -> Unit,
     onBook: (city: String, code: String) -> Unit,
-    onMarkVisited: (String) -> Unit,
+    onMarkVisited: (InspirationDestinationDto) -> Unit,
+    onUnmarkVisited: (String) -> Unit,
     onShare: (dest: InspirationDestinationDto) -> Unit,
     onReset: () -> Unit
 ) {
+    var showVisitedDialog by remember { mutableStateOf(false) }
     Column {
         // Header
         Row(
@@ -807,6 +813,24 @@ private fun ResultsPanel(
                     color = Color.White.copy(alpha = 0.35f)
                 )
             }
+            // Bouton "Visités (n)"
+            if (visitedDestinations.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFF16A34A).copy(alpha = 0.15f))
+                        .border(1.dp, Color(0xFF4ADE80).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .clickable { showVisitedDialog = true }
+                        .padding(horizontal = 10.dp, vertical = 7.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4ADE80), modifier = Modifier.size(13.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Visités (${visitedDestinations.size})", color = Color(0xFF4ADE80), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                Spacer(Modifier.width(6.dp))
+            }
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
@@ -822,6 +846,66 @@ private fun ResultsPanel(
                         style = MaterialTheme.typography.labelMedium)
                 }
             }
+        }
+
+        // Dialog liste des destinations visitées
+        if (showVisitedDialog) {
+            AlertDialog(
+                onDismissRequest = { showVisitedDialog = false },
+                containerColor = Color(0xFF1A1A2E),
+                tonalElevation = 0.dp,
+                shape = RoundedCornerShape(20.dp),
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4ADE80), modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Destinations visitées", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    }
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Appuyez sur × pour retirer une destination de la liste.", color = Color.White.copy(alpha = 0.45f), style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(4.dp))
+                        visitedDestinations.forEach { dest ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.White.copy(alpha = 0.06f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFF1E3A5F)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(dest.code ?: "", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.ExtraBold, color = Color.White, fontSize = 9.sp)
+                                }
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(dest.city ?: "", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Color.White)
+                                    Text(dest.country ?: "", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.45f))
+                                }
+                                IconButton(
+                                    onClick = { onUnmarkVisited(dest.code ?: "") },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(Icons.Default.Close, null, tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showVisitedDialog = false }) {
+                        Text("Fermer", color = AccentBlue, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            )
         }
 
         Spacer(Modifier.height(8.dp))
@@ -840,7 +924,7 @@ private fun ResultsPanel(
                     strings = strings,
                     onSelect = { onSelectCity(dest.city ?: "") },
                     onBook = { onBook(dest.city ?: "", dest.code ?: "") },
-                    onMarkVisited = { onMarkVisited(dest.code ?: "") },
+                    onMarkVisited = { onMarkVisited(dest) },
                     onShare = { onShare(dest) }
                 )
             }
@@ -870,7 +954,7 @@ private fun InspirationDestCard(
     }
 
     val photoQuery = dest.city?.lowercase()?.replace(" ", "+") ?: "travel"
-    val photoUrl   = "https://source.unsplash.com/featured/?$photoQuery,travel,city"
+val photoUrl = "https://loremflickr.com/600/220/$photoQuery,landmark,travel"
 
     Box(
         modifier = Modifier
