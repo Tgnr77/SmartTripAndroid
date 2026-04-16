@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -978,23 +979,27 @@ private fun InspirationDestCard(
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color.White.copy(alpha = 0.05f))
                             .padding(horizontal = 10.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         w.description?.let {
                             Text(it.replaceFirstChar(Char::uppercase),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.65f))
+                                color = Color.White.copy(alpha = 0.65f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false))
                         }
                         w.humidity?.let {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Icon(Icons.Default.WaterDrop, null, tint = Color(0xFF60A5FA), modifier = Modifier.size(10.dp))
-                                Text("$it%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF60A5FA))
+                                Text("$it%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF60A5FA), maxLines = 1, softWrap = false)
                             }
                         }
                         w.windSpeed?.let {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Icon(Icons.Default.Air, null, tint = Color(0xFF34D399), modifier = Modifier.size(10.dp))
-                                Text("${(it * 3.6).toInt()}km/h", style = MaterialTheme.typography.labelSmall, color = Color(0xFF34D399))
+                                Text("${(it * 3.6).toInt()}km/h", style = MaterialTheme.typography.labelSmall, color = Color(0xFF34D399), maxLines = 1, softWrap = false)
                             }
                         }
                     }
