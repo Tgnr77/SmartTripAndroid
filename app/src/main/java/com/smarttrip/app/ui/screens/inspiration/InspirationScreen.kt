@@ -954,8 +954,7 @@ private fun InspirationDestCard(
     }
 
     val photoQuery = dest.city?.lowercase()?.replace(" ", "+") ?: "travel"
-val photoUrl = "https://loremflickr.com/600/220/$photoQuery,landmark,travel"
-
+    val photoUrl = CityPhotoProvider.getPhotoUrl(dest.code ?: "", dest.city ?: photoQuery)
     Box(
         modifier = Modifier
             .fillMaxWidth()
