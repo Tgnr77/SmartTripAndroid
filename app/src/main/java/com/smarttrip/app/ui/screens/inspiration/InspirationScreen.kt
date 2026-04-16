@@ -13,11 +13,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
@@ -69,10 +71,21 @@ private val BUDGET_OPTIONS = listOf(
 )
 
 // Gradient colors for the sheet
-private val SheetBg    = Color(0xDA0D0D20)  // 85% opaque — glassmorphism
+private val SheetBg    = Color(0xDA0D0D20)
 private val AccentBlue  = Color(0xFF6366F1)
 private val AccentPink  = Color(0xFFEC4899)
 private val AccentAmber = Color(0xFFF59E0B)
+
+// Continent chips
+private data class ContinentOption(val key: String, val label: String, val icon: ImageVector)
+private val CONTINENT_OPTIONS = listOf(
+    ContinentOption("", "Tous", Icons.Default.Language),
+    ContinentOption("europe", "Europe", Icons.Default.Public),
+    ContinentOption("asia", "Asie", Icons.Default.Explore),
+    ContinentOption("americas", "Amériques", Icons.Default.Map),
+    ContinentOption("africa", "Afrique", Icons.Default.NaturePeople),
+    ContinentOption("oceanie", "Océanie", Icons.Default.Waves),
+)
 
 // ─── Multi-airport cities ──────────────────────────────────────────────────────────
 private data class AirportOption(val code: String, val name: String)
@@ -127,6 +140,9 @@ fun InspirationScreen(
     val humidity      by viewModel.humidity.collectAsState()
     val wind          by viewModel.wind.collectAsState()
     val budget        by viewModel.budget.collectAsState()
+    val continent     by viewModel.continent.collectAsState()
+    val visitedCodes  by viewModel.visitedCodes.collectAsState()
+    val trendingCodes by viewModel.trendingCodes.collectAsState()
     val favoriteCodes by viewModel.favoriteCodes.collectAsState()
     val recentCodes   by viewModel.recentCodes.collectAsState()
     val language      by LanguageManager.language.collectAsState()
@@ -229,6 +245,8 @@ fun InspirationScreen(
                 is InspirationUiState.Success -> ResultsPanel(
                     results = results,
                     selectedCity = selectedCity,
+                    trendingCodes = trendingCodes,
+                    visitedCodes = visitedCodes,
                     strings = strings,
                     onSelectCity = { city ->
                         selectedCity = city
@@ -241,6 +259,7 @@ fun InspirationScreen(
                     onBook = { city, code ->
                         navigateToDestination(city, code)
                     },
+                    onMarkVisited = { code -> viewModel.markVisited(code) },
                     onReset = {
                         viewModel.reset()
                         globeController.resetView()
@@ -251,7 +270,7 @@ fun InspirationScreen(
                 else -> FiltersPanel(
                     weather = weather, temperature = temperature,
                     humidity = humidity, wind = wind,
-                    budget = budget,
+                    budget = budget, continent = continent,
                     origin = origin, originCode = originCode,
                     departureDate = departureDate,
                     originSuggestions = originSuggestions,
@@ -263,6 +282,7 @@ fun InspirationScreen(
                     onHumidityChange = { viewModel.setHumidity(it) },
                     onWindChange = { viewModel.setWind(it) },
                     onBudgetChange = { viewModel.setBudget(it) },
+                    onContinentChange = { viewModel.setContinent(it) },
                     onOriginChange = { v ->
                         origin = v; originCode = ""
                         originSuggestions = searchAirports(v)
@@ -349,7 +369,7 @@ fun InspirationScreen(
                         }
                     }
                     Spacer(Modifier.width(2.dp))
-                    Text("✨", fontSize = 20.sp)
+                    Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFFBFC5F7), modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
                     Text(
                         strings.inspirationScreenTitle,
@@ -361,55 +381,46 @@ fun InspirationScreen(
                     Spacer(Modifier.weight(1f))
                     // Boutons Surprise : Tendances + Aléatoire
                     Row(
-                        modifier = Modifier.padding(end = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.padding(end = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // 🔥 Surprise Tendances
+                        // Tendances
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    Brush.horizontalGradient(listOf(Color(0xFFEA580C), Color(0xFFF59E0B)))
-                                )
+                                .height(30.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.dp, Color(0xFFD97706).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .background(Color(0xFFD97706).copy(alpha = 0.15f))
                                 .clickable {
                                     globeController.startSurpriseSpin()
                                     viewModel.surpriseTrending()
                                 }
-                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                                .padding(horizontal = 10.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("🔥", fontSize = 13.sp)
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    "Tendances",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(13.dp))
+                                Text("Tendances", color = Color(0xFFF59E0B), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                             }
                         }
-                        // 🎲 Surprise Aléatoire
+                        // Aléatoire
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    Brush.horizontalGradient(listOf(Color(0xFF7C3AED), Color(0xFFEC4899)))
-                                )
+                                .height(30.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.dp, AccentBlue.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .background(AccentBlue.copy(alpha = 0.15f))
                                 .clickable {
                                     globeController.startSurpriseSpin()
                                     viewModel.surpriseRandom(originCode, departureDate)
                                 }
-                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                                .padding(horizontal = 10.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("🎲", fontSize = 13.sp)
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    strings.surpriseBtn,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Default.Shuffle, null, tint = AccentBlue, modifier = Modifier.size(13.dp))
+                                Text(strings.surpriseBtn, color = AccentBlue, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -463,14 +474,14 @@ fun InspirationScreen(
 @Composable
 private fun FiltersPanel(
     weather: String, temperature: String, humidity: String, wind: String,
-    budget: String,
+    budget: String, continent: String,
     origin: String, originCode: String, departureDate: String,
     originSuggestions: List<Airport>, showOriginDropdown: Boolean,
     uiState: InspirationUiState,
     strings: AppStrings,
     onWeatherChange: (String) -> Unit, onTemperatureChange: (String) -> Unit,
     onHumidityChange: (String) -> Unit, onWindChange: (String) -> Unit,
-    onBudgetChange: (String) -> Unit,
+    onBudgetChange: (String) -> Unit, onContinentChange: (String) -> Unit,
     onOriginChange: (String) -> Unit, onAirportSelect: (Airport) -> Unit,
     onDatePick: () -> Unit, onSearch: () -> Unit
 ) {
@@ -503,7 +514,7 @@ private fun FiltersPanel(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
     ) {
-        // Header row
+        // Header row: title + date compact button
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
@@ -519,11 +530,62 @@ private fun FiltersPanel(
                 color = Color.White,
                 letterSpacing = 0.2.sp
             )
+            Spacer(Modifier.weight(1f))
+            // Date compact button
+            Box(
+                modifier = Modifier
+                    .height(28.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                    .background(Color.White.copy(alpha = 0.06f))
+                    .clickable { onDatePick() }
+                    .padding(horizontal = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Icon(Icons.Default.CalendarToday, null, tint = AccentBlue, modifier = Modifier.size(12.dp))
+                    Text(
+                        if (departureDate.isEmpty()) "Date" else departureDate,
+                        color = if (departureDate.isEmpty()) Color.White.copy(alpha = 0.4f) else Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
+        // Continent filter — always visible in peek
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(end = 4.dp)
+        ) {
+            items(CONTINENT_OPTIONS) { opt ->
+                val isSel = continent == opt.key
+                Box(
+                    modifier = Modifier
+                        .height(26.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .border(
+                            1.dp,
+                            if (isSel) AccentBlue.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.12f),
+                            RoundedCornerShape(7.dp)
+                        )
+                        .background(if (isSel) AccentBlue.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.04f))
+                        .clickable { onContinentChange(opt.key) }
+                        .padding(horizontal = 9.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(opt.icon, null, tint = if (isSel) AccentBlue else Color.White.copy(alpha = 0.4f), modifier = Modifier.size(11.dp))
+                        Text(opt.label, color = if (isSel) Color.White else Color.White.copy(alpha = 0.55f), style = MaterialTheme.typography.labelSmall, fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(10.dp))
         // First chip row visible in peek
-        FilterSection(strings.filterWeatherTitle, weatherOptions, weather, onWeatherChange)
-        Spacer(Modifier.height(14.dp))
+        FilterSection(strings.filterWeatherTitle, Icons.Default.WbSunny, weatherOptions, weather, onWeatherChange)
+        Spacer(Modifier.height(10.dp))
         // Hint to drag up
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -572,10 +634,10 @@ private fun FiltersPanel(
                 }
             }
         }
-        item { FilterSection(strings.filterTempTitle, tempOptions, temperature, onTemperatureChange) }
-        item { FilterSection(strings.filterHumidityTitle, humidityOptions, humidity, onHumidityChange) }
-        item { FilterSection(strings.filterWindTitle, windOptions, wind, onWindChange) }
-        item { FilterSection(strings.filterBudgetTitle, budgetOptions, budget, onBudgetChange) }
+        item { FilterSection(strings.filterTempTitle, Icons.Default.Thermostat, tempOptions, temperature, onTemperatureChange) }
+        item { FilterSection(strings.filterHumidityTitle, Icons.Default.WaterDrop, humidityOptions, humidity, onHumidityChange) }
+        item { FilterSection(strings.filterWindTitle, Icons.Default.Air, windOptions, wind, onWindChange) }
+        item { FilterSection(strings.filterBudgetTitle, Icons.Default.Euro, budgetOptions, budget, onBudgetChange) }
         if (uiState is InspirationUiState.Error) {
             item {
                 Row(
@@ -634,6 +696,7 @@ private fun FiltersPanel(
 @Composable
 private fun FilterSection(
     title: String,
+    icon: ImageVector,
     options: List<Option>,
     selected: String,
     onSelect: (String) -> Unit
@@ -648,6 +711,8 @@ private fun FilterSection(
                     .background(Brush.verticalGradient(listOf(AccentBlue, AccentPink)))
             )
             Spacer(Modifier.width(8.dp))
+            Icon(icon, null, tint = AccentBlue.copy(alpha = 0.85f), modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(6.dp))
             Text(
                 title,
                 style = MaterialTheme.typography.labelLarge,
@@ -697,9 +762,12 @@ private fun FilterSection(
 private fun ResultsPanel(
     results: List<InspirationDestinationDto>,
     selectedCity: String?,
+    trendingCodes: Set<String>,
+    visitedCodes: Set<String>,
     strings: AppStrings,
     onSelectCity: (String) -> Unit,
     onBook: (city: String, code: String) -> Unit,
+    onMarkVisited: (String) -> Unit,
     onReset: () -> Unit
 ) {
     Column {
@@ -751,9 +819,12 @@ private fun ResultsPanel(
                     dest = dest,
                     isSelected = dest.city == selectedCity,
                     isTop = index == 0,
+                    isTrending = dest.code in trendingCodes,
+                    isVisited = dest.code in visitedCodes,
                     strings = strings,
                     onSelect = { onSelectCity(dest.city ?: "") },
-                    onBook = { onBook(dest.city ?: "", dest.code ?: "") }
+                    onBook = { onBook(dest.city ?: "", dest.code ?: "") },
+                    onMarkVisited = { onMarkVisited(dest.code ?: "") }
                 )
             }
         }
@@ -767,9 +838,12 @@ private fun InspirationDestCard(
     dest: InspirationDestinationDto,
     isSelected: Boolean,
     isTop: Boolean,
+    isTrending: Boolean,
+    isVisited: Boolean,
     strings: AppStrings,
     onSelect: () -> Unit,
-    onBook: () -> Unit
+    onBook: () -> Unit,
+    onMarkVisited: () -> Unit
 ) {
     val containerBg = when {
         isSelected -> Brush.linearGradient(listOf(Color(0xFF1E1B4B), Color(0xFF2D1B69)))
@@ -827,7 +901,23 @@ private fun InspirationDestCard(
                                 Text("★ Top", style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 9.sp)
                             }
-                            Spacer(Modifier.width(6.dp))
+                            Spacer(Modifier.width(5.dp))
+                        }
+                        if (isTrending) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .background(Color(0xFFD97706).copy(alpha = 0.2f))
+                                    .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.4f), RoundedCornerShape(5.dp))
+                                    .padding(horizontal = 5.dp, vertical = 1.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(9.dp))
+                                Text("Tendance", style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold, color = Color(0xFFF59E0B), fontSize = 9.sp)
+                            }
+                            Spacer(Modifier.width(5.dp))
                         }
                         Text(
                             dest.city ?: "Destination",
@@ -896,15 +986,38 @@ private fun InspirationDestCard(
                                 color = Color.White.copy(alpha = 0.65f))
                         }
                         w.humidity?.let {
-                            Text("💧$it%", style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF60A5FA))
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Icon(Icons.Default.WaterDrop, null, tint = Color(0xFF60A5FA), modifier = Modifier.size(10.dp))
+                                Text("$it%", style = MaterialTheme.typography.labelSmall, color = Color(0xFF60A5FA))
+                            }
                         }
                         w.windSpeed?.let {
-                            Text("💨${(it * 3.6).toInt()}km/h", style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF34D399))
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Icon(Icons.Default.Air, null, tint = Color(0xFF34D399), modifier = Modifier.size(10.dp))
+                                Text("${(it * 3.6).toInt()}km/h", style = MaterialTheme.typography.labelSmall, color = Color(0xFF34D399))
+                            }
                         }
                     }
                     Spacer(Modifier.width(8.dp))
+                    // Déjà visité
+                    if (!isVisited) {
+                        Box(
+                            modifier = Modifier
+                                .height(30.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .clickable { onMarkVisited() }
+                                .padding(horizontal = 9.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Default.CheckCircleOutline, null, tint = Color.White.copy(alpha = 0.45f), modifier = Modifier.size(12.dp))
+                                Text("Visité", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.45f))
+                            }
+                        }
+                        Spacer(Modifier.width(6.dp))
+                    }
                     // Book button
                     Box(
                         modifier = Modifier
