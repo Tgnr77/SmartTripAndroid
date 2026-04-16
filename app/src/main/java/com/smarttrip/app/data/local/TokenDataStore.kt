@@ -24,7 +24,8 @@ class TokenDataStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        private val TOKEN_KEY = stringPreferencesKey("auth_token")
+        private val TOKEN_KEY          = stringPreferencesKey("auth_token")
+        private val VISITED_JSON_KEY   = stringPreferencesKey("visited_destinations_json")
     }
 
     // In-memory cache initialised asynchronously to avoid blocking the main thread.
@@ -65,5 +66,16 @@ class TokenDataStore @Inject constructor(
             prefs.remove(TOKEN_KEY)
         }
         cachedToken = null
+    }
+
+    // ─── Visited destinations ─────────────────────────────────────────────
+
+    suspend fun loadVisitedJson(): String? =
+        context.dataStore.data.first()[VISITED_JSON_KEY]
+
+    suspend fun saveVisitedJson(json: String) {
+        context.dataStore.edit { prefs ->
+            prefs[VISITED_JSON_KEY] = json
+        }
     }
 }

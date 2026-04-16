@@ -2,6 +2,8 @@ package com.smarttrip.app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.smarttrip.app.data.local.TokenDataStore
 import com.smarttrip.app.data.remote.models.InspirationDestinationDto
 import com.smarttrip.app.data.remote.models.InspirationRequest
@@ -68,6 +70,7 @@ class InspirationViewModel @Inject constructor(
             _visitedCodes.value = _visitedCodes.value + code
             _visitedDestinations.value = _visitedDestinations.value + dest
             applyLocalFilters()
+            saveVisitedToDataStore()
         }
     }
 
@@ -75,6 +78,24 @@ class InspirationViewModel @Inject constructor(
         _visitedCodes.value = _visitedCodes.value - code
         _visitedDestinations.value = _visitedDestinations.value.filter { it.code != code }
         applyLocalFilters()
+        saveVisitedToDataStore()
+    }
+
+    private fun loadVisitedFromDataStore() {
+        viewModelScope.launch {
+            val json = tokenDataStore.loadVisitedJson() ?: return@launch
+            val type = object : TypeToken<List<InspirationDestinationDto>>() {}.type
+            val list: List<InspirationDestinationDto> = gson.fromJson(json, type) ?: emptyList()
+            _visitedDestinations.value = list
+            _visitedCodes.value = list.mapNotNull { it.code }.toSet()
+            applyLocalFilters()
+        }
+    }
+
+    private fun saveVisitedToDataStore() {
+        viewModelScope.launch {
+            tokenDataStore.saveVisitedJson(gson.toJson(_visitedDestinations.value))
+        }
     }
 
     // ─── Codes trending (pour badge sur les cartes) ───────────────────────
@@ -93,9 +114,12 @@ class InspirationViewModel @Inject constructor(
     private val _recentCodes = MutableStateFlow<Set<String>>(emptySet())
     val recentCodes: StateFlow<Set<String>> = _recentCodes
 
+    private val gson = Gson()
+
     init {
         loadFavoritesAndHistory()
         loadTrendingCodes()
+        loadVisitedFromDataStore()
     }
 
     private fun loadFavoritesAndHistory() {
