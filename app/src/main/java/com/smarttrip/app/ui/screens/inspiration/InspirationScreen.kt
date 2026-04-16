@@ -1,6 +1,7 @@
 package com.smarttrip.app.ui.screens.inspiration
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,12 +26,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import com.smarttrip.app.data.local.Airport
 import com.smarttrip.app.data.local.searchAirports
@@ -261,6 +265,16 @@ fun InspirationScreen(
                         navigateToDestination(city, code)
                     },
                     onMarkVisited = { code -> viewModel.markVisited(code) },
+                    onShare = { dest ->
+                        val price = dest.minPrice?.let { " · ~${it.toInt()}€" } ?: ""
+                        val temp  = dest.weather?.temperature?.let { " · ${it.toInt()}°" } ?: ""
+                        val text  = "✈️ ${dest.city}, ${dest.country}$price$temp\n🌍 Découvert avec SmartTrip"
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, text)
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Partager la destination"))
+                    },
                     onReset = {
                         viewModel.reset()
                         globeController.resetView()
@@ -769,6 +783,7 @@ private fun ResultsPanel(
     onSelectCity: (String) -> Unit,
     onBook: (city: String, code: String) -> Unit,
     onMarkVisited: (String) -> Unit,
+    onShare: (dest: InspirationDestinationDto) -> Unit,
     onReset: () -> Unit
 ) {
     Column {
@@ -825,7 +840,8 @@ private fun ResultsPanel(
                     strings = strings,
                     onSelect = { onSelectCity(dest.city ?: "") },
                     onBook = { onBook(dest.city ?: "", dest.code ?: "") },
-                    onMarkVisited = { onMarkVisited(dest.code ?: "") }
+                    onMarkVisited = { onMarkVisited(dest.code ?: "") },
+                    onShare = { onShare(dest) }
                 )
             }
         }
@@ -844,135 +860,209 @@ private fun InspirationDestCard(
     strings: AppStrings,
     onSelect: () -> Unit,
     onBook: () -> Unit,
-    onMarkVisited: () -> Unit
+    onMarkVisited: () -> Unit,
+    onShare: () -> Unit
 ) {
-    val containerBg = when {
-        isSelected -> Brush.linearGradient(listOf(Color(0xFF1E1B4B), Color(0xFF2D1B69)))
-        isTop      -> Brush.linearGradient(listOf(Color(0xFF1C1A0F), Color(0xFF2D2410)))
-        else       -> Brush.linearGradient(listOf(Color.White.copy(alpha = 0.06f), Color.White.copy(alpha = 0.04f)))
-    }
     val borderColor = when {
         isSelected -> AccentPink
         isTop      -> AccentAmber
         else       -> Color.White.copy(alpha = 0.1f)
     }
+
+    val photoQuery = dest.city?.lowercase()?.replace(" ", "+") ?: "travel"
+    val photoUrl   = "https://source.unsplash.com/featured/?$photoQuery,travel,city"
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(containerBg)
             .border(1.dp, borderColor, RoundedCornerShape(16.dp))
             .clickable { onSelect() }
-            .padding(14.dp)
     ) {
         Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // IATA badge
+            // ── Photo banner ────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(110.dp)
+            ) {
+                // Background: dark fallback while loading
+                Box(Modifier.matchParentSize().background(Color(0xFF1A1A30)))
+
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(photoUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = dest.city,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+
+                // Bottom gradient overlay so text is readable
                 Box(
                     modifier = Modifier
-                        .size(50.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                0.45f to Color.Transparent,
+                                1f to Color(0xFF0D0D1A)
+                            )
+                        )
+                )
+
+                // Top-left: IATA badge
+                Box(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
                         .background(
                             Brush.verticalGradient(
                                 if (isSelected) listOf(AccentPink, Color(0xFF9333EA))
                                 else if (isTop) listOf(AccentAmber, Color(0xFFEA580C))
-                                else listOf(Primary600, Primary900)
+                                else listOf(Color(0xFF3730A3), Color(0xFF1E1B4B))
                             )
-                        ),
+                        )
+                        .align(Alignment.TopStart),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         dest.code ?: "",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White,
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
                 }
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+
+                // Top-right actions: share + temperature
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Share button
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF000000).copy(alpha = 0.45f))
+                            .clickable { onShare() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Share, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    }
+
+                    // Temperature
+                    dest.weather?.temperature?.let { temp ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF000000).copy(alpha = 0.45f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "${temp.toInt()}°",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = when {
+                                    temp >= 28 -> Color(0xFFEF4444)
+                                    temp >= 20 -> Color(0xFFF97316)
+                                    temp >= 12 -> Color(0xFF22C55E)
+                                    temp >= 5  -> Color(0xFF60A5FA)
+                                    else       -> Color(0xFF22D3EE)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Bottom-left: city name + badges
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 10.dp, bottom = 8.dp, end = 60.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         if (isTop) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(5.dp))
+                                    .clip(RoundedCornerShape(4.dp))
                                     .background(AccentAmber)
-                                    .padding(horizontal = 5.dp, vertical = 1.dp)
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
                             ) {
                                 Text("★ Top", style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 9.sp)
+                                    fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 8.sp)
                             }
-                            Spacer(Modifier.width(5.dp))
                         }
                         if (isTrending) {
                             Row(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .background(Color(0xFFD97706).copy(alpha = 0.2f))
-                                    .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.4f), RoundedCornerShape(5.dp))
-                                    .padding(horizontal = 5.dp, vertical = 1.dp),
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFFD97706).copy(alpha = 0.85f))
+                                    .padding(horizontal = 4.dp, vertical = 1.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
-                                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(9.dp))
+                                Icon(Icons.AutoMirrored.Filled.TrendingUp, null,
+                                    tint = Color.White, modifier = Modifier.size(8.dp))
                                 Text("Tendance", style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold, color = Color(0xFFF59E0B), fontSize = 9.sp)
+                                    fontWeight = FontWeight.SemiBold, color = Color.White, fontSize = 8.sp)
                             }
-                            Spacer(Modifier.width(5.dp))
                         }
-                        Text(
-                            dest.city ?: "Destination",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
                     }
+                    Text(
+                        dest.city ?: "Destination",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     Text(
                         dest.country ?: "",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.45f)
+                        color = Color.White.copy(alpha = 0.65f)
                     )
-                    dest.minPrice?.let { price ->
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            "~${price.toInt()}€",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4ADE80)
-                        )
-                    }
                 }
-                // Temperature badge
-                dest.weather?.temperature?.let { temp ->
+
+                // Bottom-right: price
+                dest.minPrice?.let { price ->
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 10.dp, bottom = 10.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF16A34A).copy(alpha = 0.85f))
+                            .padding(horizontal = 7.dp, vertical = 3.dp)
                     ) {
-                        Text(
-                            "${temp.toInt()}°",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = when {
-                                temp >= 28 -> Color(0xFFEF4444)
-                                temp >= 20 -> Color(0xFFF97316)
-                                temp >= 12 -> Color(0xFF22C55E)
-                                temp >= 5  -> Color(0xFF60A5FA)
-                                else       -> Color(0xFF22D3EE)
-                            }
-                        )
+                        Text("~${price.toInt()}€", style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
 
-            // Weather + Book row
-            dest.weather?.let { w ->
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            // ── Weather + action buttons ─────────────────────────────────
+            val cardBg = when {
+                isSelected -> Brush.linearGradient(listOf(Color(0xFF1E1B4B), Color(0xFF2D1B69)))
+                isTop      -> Brush.linearGradient(listOf(Color(0xFF1C1A0F), Color(0xFF2D2410)))
+                else       -> Brush.linearGradient(listOf(Color(0xFF111128), Color(0xFF0D0D1A)))
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(cardBg)
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                dest.weather?.let { w ->
                     Row(
                         modifier = Modifier
                             .weight(1f)
@@ -986,8 +1076,7 @@ private fun InspirationDestCard(
                             Text(it.replaceFirstChar(Char::uppercase),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White.copy(alpha = 0.65f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false))
                         }
                         w.humidity?.let {
@@ -1004,42 +1093,41 @@ private fun InspirationDestCard(
                         }
                     }
                     Spacer(Modifier.width(8.dp))
-                    // Déjà visité
-                    if (!isVisited) {
-                        Box(
-                            modifier = Modifier
-                                .height(30.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .clickable { onMarkVisited() }
-                                .padding(horizontal = 9.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(Icons.Default.CheckCircleOutline, null, tint = Color.White.copy(alpha = 0.45f), modifier = Modifier.size(12.dp))
-                                Text("Visité", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.45f))
-                            }
-                        }
-                        Spacer(Modifier.width(6.dp))
-                    }
-                    // Book button
+                }
+                // Visité
+                if (!isVisited) {
                     Box(
                         modifier = Modifier
                             .height(30.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Brush.horizontalGradient(listOf(AccentBlue, Color(0xFF8B5CF6))))
-                            .clickable { onBook() }
-                            .padding(horizontal = 12.dp),
+                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .clickable { onMarkVisited() }
+                            .padding(horizontal = 9.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.FlightTakeoff, null, tint = Color.White,
-                                modifier = Modifier.size(12.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text(strings.btnBook, style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold, color = Color.White)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.CheckCircleOutline, null, tint = Color.White.copy(alpha = 0.45f), modifier = Modifier.size(12.dp))
+                            Text("Visité", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.45f))
                         }
+                    }
+                    Spacer(Modifier.width(6.dp))
+                }
+                // Réserver
+                Box(
+                    modifier = Modifier
+                        .height(30.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Brush.horizontalGradient(listOf(AccentBlue, Color(0xFF8B5CF6))))
+                        .clickable { onBook() }
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.FlightTakeoff, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(strings.btnBook, style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
