@@ -180,7 +180,17 @@ data class AppStrings(
     val optionHumid: String,
     val optionCalm: String,
     val optionModerate: String,
-    val optionWindy: String
+    val optionWindy: String,
+    // ── Inspiration top bar ──────────────────────────────────────────────────────
+    val trendingBtn: String,
+    val dateLabel: String,
+    // ── Continent filters ─────────────────────────────────────────────────────────
+    val continentAll: String,
+    val continentEurope: String,
+    val continentAsia: String,
+    val continentAmericas: String,
+    val continentAfrica: String,
+    val continentOceania: String,
 ) {
     companion object {
         fun forLanguage(lang: AppLanguage): AppStrings = when (lang) {
@@ -356,7 +366,15 @@ data class AppStrings(
                 optionHumid = "Humide >70%",
                 optionCalm = "Calme <10km/h",
                 optionModerate = "Modéré 10-30km/h",
-                optionWindy = "Venteux >30km/h"
+                optionWindy = "Venteux >30km/h",
+                trendingBtn = "Tendances",
+                dateLabel = "Date",
+                continentAll = "Tous",
+                continentEurope = "Europe",
+                continentAsia = "Asie",
+                continentAmericas = "Amériques",
+                continentAfrica = "Afrique",
+                continentOceania = "Océanie"
             )
             AppLanguage.ENGLISH -> AppStrings(
                 // Landing
@@ -530,7 +548,15 @@ data class AppStrings(
                 optionHumid = "Humid >70%",
                 optionCalm = "Calm <10km/h",
                 optionModerate = "Moderate 10-30km/h",
-                optionWindy = "Windy >30km/h"
+                optionWindy = "Windy >30km/h",
+                trendingBtn = "Trending",
+                dateLabel = "Date",
+                continentAll = "All",
+                continentEurope = "Europe",
+                continentAsia = "Asia",
+                continentAmericas = "Americas",
+                continentAfrica = "Africa",
+                continentOceania = "Oceania"
             )
             AppLanguage.SPANISH -> AppStrings(
                 // Landing
@@ -704,7 +730,15 @@ data class AppStrings(
                 optionHumid = "Húmedo >70%",
                 optionCalm = "Calmo <10km/h",
                 optionModerate = "Moderado 10-30km/h",
-                optionWindy = "Ventoso >30km/h"
+                optionWindy = "Ventoso >30km/h",
+                trendingBtn = "Tendencias",
+                dateLabel = "Fecha",
+                continentAll = "Todos",
+                continentEurope = "Europa",
+                continentAsia = "Asia",
+                continentAmericas = "Américas",
+                continentAfrica = "África",
+                continentOceania = "Oceanía"
             )
             AppLanguage.CHINESE -> AppStrings(
                 // Landing
@@ -876,7 +910,15 @@ data class AppStrings(
                 optionHumid = "潮湿 >70%",
                 optionCalm = "平静 <10km/h",
                 optionModerate = "适中 10-30km/h",
-                optionWindy = "大风 >30km/h"
+                optionWindy = "大风 >30km/h",
+                trendingBtn = "热门",
+                dateLabel = "日期",
+                continentAll = "全部",
+                continentEurope = "欧洲",
+                continentAsia = "亚洲",
+                continentAmericas = "美洲",
+                continentAfrica = "非洲",
+                continentOceania = "大洋洲"
             )
             AppLanguage.JAPANESE -> AppStrings(
                 // Landing
@@ -1050,7 +1092,15 @@ data class AppStrings(
                 optionHumid = "多湿 >70%",
                 optionCalm = "穏やか <10km/h",
                 optionModerate = "適度 10-30km/h",
-                optionWindy = "強風 >30km/h"
+                optionWindy = "強風 >30km/h",
+                trendingBtn = "トレンド",
+                dateLabel = "日付",
+                continentAll = "すべて",
+                continentEurope = "ヨーロッパ",
+                continentAsia = "アジア",
+                continentAmericas = "アメリカ",
+                continentAfrica = "アフリカ",
+                continentOceania = "オセアニア"
             )
         }
     }

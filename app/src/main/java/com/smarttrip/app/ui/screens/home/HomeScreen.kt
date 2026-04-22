@@ -653,6 +653,8 @@ fun AirportDropdown(suggestions: List<Airport>, onSelect: (Airport) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrendingCard(dest: TrendingDestinationDto, onClick: () -> Unit) {
+    val language by LanguageManager.language.collectAsState()
+    val strings = AppStrings.forLanguage(language)
     Card(
         onClick = onClick,
         modifier = Modifier.width(160.dp),
@@ -679,7 +681,7 @@ fun TrendingCard(dest: TrendingDestinationDto, onClick: () -> Unit) {
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(dest.city ?: "Destination", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(dest.city ?: strings.destWord, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 Text(dest.country ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 if (dest.averagePrice != null) {
                     Spacer(Modifier.height(6.dp))

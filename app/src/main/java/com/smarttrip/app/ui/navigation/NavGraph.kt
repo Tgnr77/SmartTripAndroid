@@ -11,6 +11,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
@@ -160,7 +162,7 @@ fun NavGraph(
                     bottomNavItems.forEach { item ->
                         NavigationBarItem(
                             icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
+                            label = { Text(item.label, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 10.sp) },
                             selected = currentDestination?.hierarchy?.any {
                                 it.route == item.route || it.route?.startsWith("${item.route}?") == true
                             } == true,

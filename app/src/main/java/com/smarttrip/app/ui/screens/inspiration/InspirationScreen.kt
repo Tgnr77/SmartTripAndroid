@@ -83,14 +83,7 @@ private val AccentAmber = Color(0xFFF59E0B)
 
 // Continent chips
 private data class ContinentOption(val key: String, val label: String, val icon: ImageVector)
-private val CONTINENT_OPTIONS = listOf(
-    ContinentOption("", "Tous", Icons.Default.Language),
-    ContinentOption("europe", "Europe", Icons.Default.Public),
-    ContinentOption("asia", "Asie", Icons.Default.Explore),
-    ContinentOption("americas", "Amériques", Icons.Default.Map),
-    ContinentOption("africa", "Afrique", Icons.Default.NaturePeople),
-    ContinentOption("oceanie", "Océanie", Icons.Default.Waves),
-)
+private val CONTINENT_OPTIONS = emptyList<ContinentOption>()
 
 // ─── Multi-airport cities ──────────────────────────────────────────────────────────
 private data class AirportOption(val code: String, val name: String)
@@ -419,7 +412,7 @@ fun InspirationScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(13.dp))
-                                Text("Tendances", color = Color(0xFFF59E0B), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                                Text(strings.trendingBtn, color = Color(0xFFF59E0B), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
                             }
                         }
                         // Aléatoire
@@ -523,8 +516,16 @@ private fun FiltersPanel(
     )
     val budgetOptions = listOf(
         Option("", strings.optionAny), Option("200", "≤ 200€"),
-        Option("500", "≤ 500€"), Option("1000", "≤ 1 000€"),
-        Option("2000", "≤ 2 000€")
+        Option("500", "≤ 500€"), Option("1000", "≤ 1 000€"),
+        Option("2000", "≤ 2 000€")
+    )
+    val continentOptions = listOf(
+        ContinentOption("", strings.continentAll, Icons.Default.Language),
+        ContinentOption("europe", strings.continentEurope, Icons.Default.Public),
+        ContinentOption("asia", strings.continentAsia, Icons.Default.Explore),
+        ContinentOption("americas", strings.continentAmericas, Icons.Default.Map),
+        ContinentOption("africa", strings.continentAfrica, Icons.Default.NaturePeople),
+        ContinentOption("oceanie", strings.continentOceania, Icons.Default.Waves),
     )
     // Compact peek header — always visible (first ~172dp)
     Column(
@@ -563,7 +564,7 @@ private fun FiltersPanel(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     Icon(Icons.Default.CalendarToday, null, tint = AccentBlue, modifier = Modifier.size(12.dp))
                     Text(
-                        if (departureDate.isEmpty()) "Date" else departureDate,
+                        if (departureDate.isEmpty()) strings.dateLabel else departureDate,
                         color = if (departureDate.isEmpty()) Color.White.copy(alpha = 0.4f) else Color.White,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium
@@ -577,7 +578,7 @@ private fun FiltersPanel(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             contentPadding = PaddingValues(end = 4.dp)
         ) {
-            items(CONTINENT_OPTIONS) { opt ->
+            items(continentOptions) { opt ->
                 val isSel = continent == opt.key
                 Box(
                     modifier = Modifier

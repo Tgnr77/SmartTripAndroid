@@ -40,17 +40,9 @@
 <div id="loader"><div class="spinner"></div></div>
 <div id="tooltip"><div class="city"></div><div class="country"></div><div class="weather"></div></div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
-  }
-}
-</script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+<script>
 
 // ── Destinations ──────────────────────────────────────────────────────────────
 const DESTINATIONS = [
@@ -132,7 +124,7 @@ renderer.setSize(W, H);
 renderer.setClearColor(0x000000, 0);
 document.body.appendChild(renderer.domElement);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.minDistance = RADIUS + 1.5;
@@ -179,6 +171,14 @@ const earthTex = loader.load(
   () => {
     earthReady = true;
     // Fade out loading overlay
+    const loaderEl = document.getElementById('loader');
+    if (loaderEl) loaderEl.classList.add('hidden');
+  },
+  undefined,
+  () => {
+    // Texture failed — show plain blue globe and dismiss spinner
+    earthReady = true;
+    globe.material.color.set(0x1a3a6e);
     const loaderEl = document.getElementById('loader');
     if (loaderEl) loaderEl.classList.add('hidden');
   }
