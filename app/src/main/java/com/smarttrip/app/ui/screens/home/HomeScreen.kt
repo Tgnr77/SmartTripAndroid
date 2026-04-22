@@ -33,6 +33,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.smarttrip.app.data.local.Airport
 import com.smarttrip.app.data.local.searchAirports
 import com.smarttrip.app.data.remote.models.TrendingDestinationDto
+import com.smarttrip.app.ui.animation.rememberPressInteractionSource
+import com.smarttrip.app.ui.animation.scaleOnPress
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
 import com.smarttrip.app.ui.language.LanguageToggleButton
@@ -448,6 +450,7 @@ fun HomeScreen(
 
                     Spacer(Modifier.height(16.dp))
 
+                    val searchInteraction = rememberPressInteractionSource()
                     Button(
                         onClick = {
                             focusManager.clearFocus()
@@ -463,7 +466,11 @@ fun HomeScreen(
                             }
                             onSearch(params)
                         },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .scaleOnPress(searchInteraction),
+                        interactionSource = searchInteraction,
                         enabled = canSearch,
                         shape = RoundedCornerShape(14.dp)
                     ) {

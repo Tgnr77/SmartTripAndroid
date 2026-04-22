@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.smarttrip.app.ui.animation.StaggeredFadeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -159,15 +161,17 @@ fun SearchResultsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    items(flights) { flight ->
-                        FlightCard(
-                            flight = flight,
-                            passengers = passengers,
-                            returnDate = returnDate.ifBlank { null },
-                            cabinClass = cabinClass,
-                            showFavorite = !isGuest,
-                            onToggleFavorite = { viewModel.toggleFavorite(flight) }
-                        )
+                    itemsIndexed(flights) { index, flight ->
+                        StaggeredFadeIn(index = index) {
+                            FlightCard(
+                                flight = flight,
+                                passengers = passengers,
+                                returnDate = returnDate.ifBlank { null },
+                                cabinClass = cabinClass,
+                                showFavorite = !isGuest,
+                                onToggleFavorite = { viewModel.toggleFavorite(flight) }
+                            )
+                        }
                     }
                 }
             }

@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.smarttrip.app.ui.animation.rememberPressInteractionSource
+import com.smarttrip.app.ui.animation.scaleOnPress
 import com.smarttrip.app.ui.language.AppStrings
 import com.smarttrip.app.ui.language.LanguageManager
 import com.smarttrip.app.ui.language.LanguageToggleButton
@@ -104,9 +106,14 @@ fun LandingScreen(
                 FeaturePill("🌍", strings.featureInspiration)
             }
 
+            val guestInteraction = rememberPressInteractionSource()
             Button(
                 onClick = onNavigateAsGuest,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .scaleOnPress(guestInteraction),
+                interactionSource = guestInteraction,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White,
                     contentColor = Blue600
@@ -118,9 +125,14 @@ fun LandingScreen(
 
             Spacer(Modifier.height(12.dp))
 
+            val signInInteraction = rememberPressInteractionSource()
             OutlinedButton(
                 onClick = onNavigateToLogin,
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .scaleOnPress(signInInteraction),
+                interactionSource = signInInteraction,
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                 shape = RoundedCornerShape(14.dp)

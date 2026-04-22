@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.smarttrip.app.ui.animation.StaggeredFadeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -75,8 +77,10 @@ fun FavoritesScreen(
                 }
             }
             else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(favorites, key = { it.id ?: "" }) { fav ->
-                    FavoriteCard(fav, onDelete = { viewModel.deleteFavorite(fav.id ?: "") })
+                itemsIndexed(favorites, key = { _, item -> item.id ?: "" }) { index, fav ->
+                    StaggeredFadeIn(index = index) {
+                        FavoriteCard(fav, onDelete = { viewModel.deleteFavorite(fav.id ?: "") })
+                    }
                 }
             }
         }

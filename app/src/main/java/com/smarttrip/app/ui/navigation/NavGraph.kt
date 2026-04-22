@@ -1,5 +1,15 @@
 package com.smarttrip.app.ui.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
@@ -62,6 +72,29 @@ val routesWithBottomBar = setOf(
     Routes.INSPIRATION,
     Routes.SEARCH_RESULTS
 )
+
+// ─── Animations ───────────────────────────────────────────────────────────
+private const val ANIM_DURATION = 450
+private const val FADE_DURATION = 400
+
+private val animSpecInt = tween<androidx.compose.ui.unit.IntOffset>(ANIM_DURATION, easing = FastOutSlowInEasing)
+private val fadeSpec = tween<Float>(FADE_DURATION, easing = FastOutSlowInEasing)
+private val scaleSpec = tween<Float>(ANIM_DURATION, easing = FastOutSlowInEasing)
+
+// Horizontal slide (auth navigation stack) — full-screen push/pop
+private val slideEnter = slideInHorizontally(animSpecInt) { it } + fadeIn(fadeSpec)
+private val slideExit = slideOutHorizontally(animSpecInt) { -it / 3 } + fadeOut(fadeSpec)
+private val slidePopEnter = slideInHorizontally(animSpecInt) { -it / 3 } + fadeIn(fadeSpec)
+private val slidePopExit = slideOutHorizontally(animSpecInt) { it } + fadeOut(fadeSpec)
+
+// Vertical slide up (modal-feeling screens: search results, verify, reset)
+private val slideUpEnter = slideInVertically(animSpecInt) { it } + fadeIn(fadeSpec)
+private val slideUpExit = slideOutVertically(animSpecInt) { it } + fadeOut(fadeSpec)
+
+// Material 3 "Shared Axis Z" — fade + zoom, used for bottom-nav tabs.
+// Feels like the new screen is arriving from the back, clearly noticeable.
+private val tabEnter = fadeIn(fadeSpec) + scaleIn(scaleSpec, initialScale = 0.92f)
+private val tabExit = fadeOut(fadeSpec) + scaleOut(scaleSpec, targetScale = 1.08f)
 
 @Composable
 fun NavGraph(
@@ -152,7 +185,13 @@ fun NavGraph(
             modifier = Modifier.padding(innerPadding)
         ) {
             // ─── Auth ─────────────────────────────────────────────────────
-            composable(Routes.LANDING) {
+            composable(
+                Routes.LANDING,
+                enterTransition = { tabEnter },
+                exitTransition = { slideExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { slidePopExit }
+            ) {
                 LandingScreen(
                     onNavigateAsGuest = {
                         authViewModel.continueAsGuest()
@@ -161,7 +200,13 @@ fun NavGraph(
                     onNavigateToLogin = { navController.navigate(Routes.LOGIN) }
                 )
             }
-            composable(Routes.LOGIN) {
+            composable(
+                Routes.LOGIN,
+                enterTransition = { slideEnter },
+                exitTransition = { slideExit },
+                popEnterTransition = { slidePopEnter },
+                popExitTransition = { slidePopExit }
+            ) {
                 LoginScreen(
                     onLoginSuccess = {
                         navController.navigate(Routes.HOME) {
@@ -181,7 +226,13 @@ fun NavGraph(
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(Routes.REGISTER) {
+            composable(
+                Routes.REGISTER,
+                enterTransition = { slideEnter },
+                exitTransition = { slideExit },
+                popEnterTransition = { slidePopEnter },
+                popExitTransition = { slidePopExit }
+            ) {
                 RegisterScreen(
                     onRegisterSuccess = { email ->
                         navController.navigate(Routes.verifyEmail(email))
@@ -194,7 +245,11 @@ fun NavGraph(
                 arguments = listOf(
                     navArgument("email") { type = NavType.StringType },
                     navArgument("secondsLeft") { type = NavType.IntType; defaultValue = 300 }
-                )
+                ),
+                enterTransition = { slideUpEnter },
+                exitTransition = { slideExit },
+                popEnterTransition = { slidePopEnter },
+                popExitTransition = { slideUpExit }
             ) { backStackEntry ->
                 val email = backStackEntry.arguments?.getString("email") ?: ""
                 val secondsLeft = backStackEntry.arguments?.getInt("secondsLeft") ?: 300
@@ -222,14 +277,24 @@ fun NavGraph(
                     }
                 )
             }
-            composable(Routes.FORGOT_PASS) {
+            composable(
+                Routes.FORGOT_PASS,
+                enterTransition = { slideEnter },
+                exitTransition = { slideExit },
+                popEnterTransition = { slidePopEnter },
+                popExitTransition = { slidePopExit }
+            ) {
                 ForgotPasswordScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
             composable(
                 route = Routes.RESET_PASS,
-                arguments = listOf(navArgument("token") { type = NavType.StringType })
+                arguments = listOf(navArgument("token") { type = NavType.StringType }),
+                enterTransition = { slideUpEnter },
+                exitTransition = { slideExit },
+                popEnterTransition = { slidePopEnter },
+                popExitTransition = { slideUpExit }
             ) { backStackEntry ->
                 val token = backStackEntry.arguments?.getString("token") ?: ""
                 ResetPasswordScreen(
@@ -245,7 +310,11 @@ fun NavGraph(
                 arguments = listOf(
                     navArgument("destCode") { type = NavType.StringType; defaultValue = "" },
                     navArgument("destName") { type = NavType.StringType; defaultValue = "" }
-                )
+                ),
+                enterTransition = { tabEnter },
+                exitTransition = { tabExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { tabExit }
             ) { backStackEntry ->
                 val destCode = backStackEntry.arguments?.getString("destCode") ?: ""
                 val destName = backStackEntry.arguments?.getString("destName") ?: ""
@@ -268,19 +337,35 @@ fun NavGraph(
                     navArgument("class") { type = NavType.StringType; defaultValue = "economy" },
                     navArgument("nonStop") { type = NavType.BoolType; defaultValue = false },
                     navArgument("tripType") { type = NavType.StringType; defaultValue = "roundtrip" }
-                )
+                ),
+                enterTransition = { slideUpEnter },
+                exitTransition = { tabExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { slideUpExit }
             ) { backStackEntry ->
                 SearchResultsScreen(
                     args = backStackEntry.arguments,
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable(Routes.FAVORITES) {
+            composable(
+                Routes.FAVORITES,
+                enterTransition = { tabEnter },
+                exitTransition = { tabExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { tabExit }
+            ) {
                 FavoritesScreen(
                     onLoginRequired = { navController.navigate(Routes.LOGIN) }
                 )
             }
-            composable(Routes.HISTORY) {
+            composable(
+                Routes.HISTORY,
+                enterTransition = { tabEnter },
+                exitTransition = { tabExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { tabExit }
+            ) {
                 SearchHistoryScreen(
                     onLoginRequired = { navController.navigate(Routes.LOGIN) },
                     onSearchAgain = { params ->
@@ -288,7 +373,13 @@ fun NavGraph(
                     }
                 )
             }
-            composable(Routes.PROFILE) {
+            composable(
+                Routes.PROFILE,
+                enterTransition = { tabEnter },
+                exitTransition = { tabExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { tabExit }
+            ) {
                 ProfileScreen(
                     onLogout = {
                         navController.navigate(Routes.LANDING) {
@@ -298,7 +389,13 @@ fun NavGraph(
                     onLoginRequired = { navController.navigate(Routes.LOGIN) }
                 )
             }
-            composable(Routes.INSPIRATION) {
+            composable(
+                Routes.INSPIRATION,
+                enterTransition = { tabEnter },
+                exitTransition = { tabExit },
+                popEnterTransition = { tabEnter },
+                popExitTransition = { tabExit }
+            ) {
                 InspirationScreen(
                     onNavigateToHome = { destCode, destName ->
                         navController.navigate("${Routes.HOME}?destCode=$destCode&destName=$destName") {

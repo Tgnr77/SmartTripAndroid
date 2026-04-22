@@ -26,6 +26,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.smarttrip.app.ui.animation.rememberPressInteractionSource
+import com.smarttrip.app.ui.animation.scaleOnPress
 import com.smarttrip.app.ui.theme.Blue600
 import com.smarttrip.app.ui.theme.Blue700
 import com.smarttrip.app.ui.viewmodel.AuthUiState
@@ -163,9 +165,14 @@ fun LoginScreen(
 
             Spacer(Modifier.height(8.dp))
 
+            val loginInteraction = rememberPressInteractionSource()
             Button(
                 onClick = { viewModel.login(email, password) },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .scaleOnPress(loginInteraction),
+                interactionSource = loginInteraction,
                 enabled = email.isNotBlank() && password.isNotBlank() && uiState !is AuthUiState.Loading,
                 shape = RoundedCornerShape(14.dp)
             ) {

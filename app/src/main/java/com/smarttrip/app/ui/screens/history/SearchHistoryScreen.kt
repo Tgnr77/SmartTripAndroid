@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.smarttrip.app.ui.animation.StaggeredFadeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -83,24 +85,26 @@ fun SearchHistoryScreen(
                 }
             }
             else -> LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(history, key = { it.id }) { entry ->
-                    HistoryCard(
-                        entry = entry,
-                        onDelete = { viewModel.deleteEntry(entry.id) },
-                        onSearchAgain = {
-                            val params = buildString {
-                                append("origin=${entry.originCode}")
-                                append("&destination=${entry.destinationCode}")
-                                append("&departureDate=${entry.departureDate}")
-                                if (entry.returnDate != null) append("&returnDate=${entry.returnDate}")
-                                append("&passengers=${entry.passengers}")
-                                append("&class=${entry.cabinClass}")
-                                append("&tripType=${if (entry.returnDate != null) "roundtrip" else "oneway"}")
-                                append("&nonStop=false")
+                itemsIndexed(history, key = { _, item -> item.id }) { index, entry ->
+                    StaggeredFadeIn(index = index) {
+                        HistoryCard(
+                            entry = entry,
+                            onDelete = { viewModel.deleteEntry(entry.id) },
+                            onSearchAgain = {
+                                val params = buildString {
+                                    append("origin=${entry.originCode}")
+                                    append("&destination=${entry.destinationCode}")
+                                    append("&departureDate=${entry.departureDate}")
+                                    if (entry.returnDate != null) append("&returnDate=${entry.returnDate}")
+                                    append("&passengers=${entry.passengers}")
+                                    append("&class=${entry.cabinClass}")
+                                    append("&tripType=${if (entry.returnDate != null) "roundtrip" else "oneway"}")
+                                    append("&nonStop=false")
+                                }
+                                onSearchAgain(params)
                             }
-                            onSearchAgain(params)
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }

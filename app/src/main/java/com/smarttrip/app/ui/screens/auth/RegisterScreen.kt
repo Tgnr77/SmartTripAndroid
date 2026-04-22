@@ -26,6 +26,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.smarttrip.app.ui.animation.rememberPressInteractionSource
+import com.smarttrip.app.ui.animation.scaleOnPress
 import com.smarttrip.app.ui.theme.Blue600
 import com.smarttrip.app.ui.theme.Blue700
 import com.smarttrip.app.ui.viewmodel.AuthUiState
@@ -304,9 +306,14 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            val registerInteraction = rememberPressInteractionSource()
             Button(
                 onClick = { viewModel.register(email, password, firstName, lastName) },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .scaleOnPress(registerInteraction),
+                interactionSource = registerInteraction,
                 enabled = email.isNotBlank() && allRulesMet && passwordsMatch &&
                         confirmPassword.isNotBlank() &&
                         firstName.isNotBlank() && lastName.isNotBlank() &&
