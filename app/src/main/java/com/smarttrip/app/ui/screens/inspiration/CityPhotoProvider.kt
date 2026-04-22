@@ -90,6 +90,12 @@ object CityPhotoProvider {
         "MAA" to u("1604497181015-76590d828b05"),  // Chennai
         "MNL" to u("1570159512614-7a2d63d3ce84"),  // Manille
         "RGN" to u("1528181304800-259b08848526"),  // Yangon – Shwedagon
+        "PNH" to u("eeMjCvKT89E"),                // Phnom Penh – bâtiment doré
+        "REP" to u("LN17dtIsN7o"),                // Siem Reap – Angkor Wat
+        "SGN" to u("1509030450996-dd1a26dda07a"), // Ho Chi Minh City – (reflet ville)
+        "CMB" to u("hWEsT27EDcc"),                // Colombo – statue jardin
+        "KTM" to u("F4zG5aeWxAg"),               // Kathmandu – drapeaux de prières
+        "TBS" to u("1vRaCq4YX40"),               // Tbilisi – vue aérienne
         // ── Amériques ─────────────────────────────────────────────────────
         "JFK" to u("1485871981521-5b1fd3805eee"),  // New York – Skyline
         "EWR" to u("1485871981521-5b1fd3805eee"),
