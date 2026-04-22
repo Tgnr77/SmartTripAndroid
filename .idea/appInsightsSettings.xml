@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.smarttrip.app" />
+                  <option name="mobileSdkAppId" value="1:874715725721:android:bd856a7a4750b7e1da5d08" />
+                  <option name="projectId" value="smarttrip-4ef18" />
+                  <option name="projectNumber" value="874715725721" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
