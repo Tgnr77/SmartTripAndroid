@@ -387,18 +387,21 @@ fun InspirationScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        letterSpacing = 0.3.sp
+                        letterSpacing = 0.3.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(Modifier.weight(1f))
                     // Boutons Surprise : Tendances + Aléatoire
                     Row(
-                        modifier = Modifier.padding(end = 8.dp),
+                        modifier = Modifier.wrapContentWidth().padding(end = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Tendances
                         Box(
                             modifier = Modifier
+                                .wrapContentWidth()
                                 .height(30.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .border(1.dp, Color(0xFFD97706).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
@@ -412,12 +415,13 @@ fun InspirationScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Color(0xFFF59E0B), modifier = Modifier.size(13.dp))
-                                Text(strings.trendingBtn, color = Color(0xFFF59E0B), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                Text(strings.trendingBtn, color = Color(0xFFF59E0B), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                             }
                         }
                         // Aléatoire
                         Box(
                             modifier = Modifier
+                                .wrapContentWidth()
                                 .height(30.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .border(1.dp, AccentBlue.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
@@ -431,7 +435,7 @@ fun InspirationScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Icon(Icons.Default.Shuffle, null, tint = AccentBlue, modifier = Modifier.size(13.dp))
-                                Text(strings.surpriseBtn, color = AccentBlue, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                                Text(strings.surpriseBtn, color = AccentBlue, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
                             }
                         }
                     }
