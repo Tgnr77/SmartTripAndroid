@@ -37,16 +37,16 @@ import com.smarttrip.app.ui.language.LanguageManager
 import com.smarttrip.app.ui.language.LanguageToggleButton
 
 // ─── Règles de mot de passe ────────────────────────────────────────────────
-private data class PasswordRule(val label: String, val isMet: Boolean)
+internal data class PasswordRule(val label: String, val isMet: Boolean)
 
-private fun passwordRules(password: String, strings: AppStrings) = listOf(
+internal fun passwordRules(password: String, strings: AppStrings) = listOf(
     PasswordRule(strings.pwdRuleLength,  password.length >= 8),
     PasswordRule(strings.pwdRuleUpper,   password.any { it.isUpperCase() }),
     PasswordRule(strings.pwdRuleDigit,   password.any { it.isDigit() }),
     PasswordRule(strings.pwdRuleSpecial, password.any { it in "@#\$!%*?&_\\-+=" })
 )
 
-private fun passwordStrength(password: String): Int {
+internal fun passwordStrength(password: String): Int {
     if (password.isEmpty()) return 0
     var score = 0
     if (password.length >= 8)                        score++
@@ -57,7 +57,7 @@ private fun passwordStrength(password: String): Int {
 }
 
 @Composable
-private fun PasswordStrengthBar(strength: Int, strings: AppStrings) {
+internal fun PasswordStrengthBar(strength: Int, strings: AppStrings) {
     val segments = 4
     val (label, color) = when (strength) {
         1    -> strings.pwdStrengthWeak   to Color(0xFFEF4444)
@@ -98,7 +98,7 @@ private fun PasswordStrengthBar(strength: Int, strings: AppStrings) {
 }
 
 @Composable
-private fun PasswordRuleRow(rule: PasswordRule) {
+internal fun PasswordRuleRow(rule: PasswordRule) {
     val color = if (rule.isMet) Color(0xFF22C55E) else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         verticalAlignment = Alignment.CenterVertically,

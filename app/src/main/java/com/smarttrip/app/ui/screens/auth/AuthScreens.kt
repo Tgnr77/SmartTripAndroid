@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -348,8 +349,15 @@ fun ResetPasswordScreen(
     var confirm by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmVisible by remember { mutableStateOf(false) }
     val language by LanguageManager.language.collectAsState()
     val strings = AppStrings.forLanguage(language)
+    val rules = remember(password, language) { passwordRules(password, strings) }
+    val strength = remember(password) { passwordStrength(password) }
+    val allRulesMet = rules.all { it.isMet }
+    val passwordsMatch = password == confirm
+    val showMismatch = confirm.isNotEmpty() && !passwordsMatch
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Box(
@@ -405,18 +413,42 @@ fun ResetPasswordScreen(
                 onValueChange = { password = it },
                 label = { Text(strings.fieldNewPassword) },
                 leadingIcon = { Icon(Icons.Default.Lock, null, tint = Slate500) },
-                visualTransformation = PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
             )
+            Spacer(Modifier.height(8.dp))
+            PasswordStrengthBar(strength = strength, strings = strings)
+            Spacer(Modifier.height(8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+                rules.forEach { PasswordRuleRow(it) }
+            }
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = confirm,
                 onValueChange = { confirm = it },
                 label = { Text(strings.fieldConfirmPassword) },
                 leadingIcon = { Icon(Icons.Default.Lock, null, tint = Slate500) },
-                visualTransformation = PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                        Icon(
+                            if (confirmVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
+                visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                isError = showMismatch,
+                supportingText = if (showMismatch) {{ Text(strings.passwordMismatch, color = MaterialTheme.colorScheme.error) }} else null,
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -424,6 +456,10 @@ fun ResetPasswordScreen(
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = {
+                    if (!allRulesMet) {
+                        errorMsg = strings.passwordMismatch
+                        return@Button
+                    }
                     if (password != confirm) {
                         errorMsg = strings.passwordMismatch
                         return@Button
@@ -436,7 +472,7 @@ fun ResetPasswordScreen(
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
-                enabled = password.isNotBlank() && confirm.isNotBlank() && !loading,
+                enabled = password.isNotBlank() && confirm.isNotBlank() && !loading && allRulesMet && passwordsMatch,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue600)
             ) {
                 if (loading) {

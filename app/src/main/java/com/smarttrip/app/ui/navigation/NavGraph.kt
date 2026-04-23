@@ -1,5 +1,6 @@
 package com.smarttrip.app.ui.navigation
 
+import android.content.Intent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -13,6 +14,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.SharedFlow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
@@ -28,6 +30,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.smarttrip.app.ui.screens.auth.*
 import com.smarttrip.app.ui.screens.favorites.FavoritesScreen
 import com.smarttrip.app.ui.screens.history.SearchHistoryScreen
@@ -100,9 +103,17 @@ private val tabExit = fadeOut(fadeSpec) + scaleOut(scaleSpec, targetScale = 1.08
 
 @Composable
 fun NavGraph(
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    newIntentFlow: SharedFlow<Intent>? = null
 ) {
     val navController = rememberNavController()
+
+    // Traite les deep links reçus quand l'app est déjà au premier plan (onNewIntent)
+    LaunchedEffect(Unit) {
+        newIntentFlow?.collect { intent ->
+            navController.handleDeepLink(intent)
+        }
+    }
     val authState by authViewModel.uiState.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -225,7 +236,8 @@ fun NavGraph(
                             popUpTo(Routes.LANDING)
                         }
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    viewModel = authViewModel
                 )
             }
             composable(
@@ -293,6 +305,14 @@ fun NavGraph(
             composable(
                 route = Routes.RESET_PASS,
                 arguments = listOf(navArgument("token") { type = NavType.StringType }),
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "smarttrip://reset-password?token={token}"
+                    },
+                    navDeepLink {
+                        uriPattern = "https://backend-production-891ed.up.railway.app/reset-password?token={token}"
+                    }
+                ),
                 enterTransition = { slideUpEnter },
                 exitTransition = { slideExit },
                 popEnterTransition = { slidePopEnter },
@@ -388,7 +408,8 @@ fun NavGraph(
                             popUpTo(0) { inclusive = true }
                         }
                     },
-                    onLoginRequired = { navController.navigate(Routes.LOGIN) }
+                    onLoginRequired = { navController.navigate(Routes.LOGIN) },
+                    viewModel = authViewModel
                 )
             }
             composable(
